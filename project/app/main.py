@@ -1,9 +1,9 @@
-from fastapi import FastAPI
 import os
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-
-from app.routes import ServiceRouter
+from app.routes import ServiceRouter, EmployeeRouter
 
 
 app = FastAPI()
@@ -28,8 +28,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(ServiceRouter, prefix="/service", tags=["service"])
+app.include_router(EmployeeRouter, prefix="/employee", tags=["employee"])
 
 
 @app.get("/ping")
