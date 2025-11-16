@@ -135,8 +135,7 @@ async def clerk_webhook(
 ):
     body = await request.body()
 
-    # support both env var names used in docs and earlier code
-    secret = os.getenv("CLERK_WEBHOOK_SIGNING_SECRET") or os.getenv("CLERK_WEBHOOK_SECRET")
+    secret = os.getenv("CLERK_WEBHOOK_SECRET")
     if secret:
         # Prefer Svix-style signatures (Clerk uses Svix under the hood).
         if svix_signature:
@@ -144,10 +143,14 @@ async def clerk_webhook(
             import hashlib
             import hmac
 
-            # svix-signature can contain multiple comma-separated entries like "v1,<sig>"
-            parts = [p.strip() for p in svix_signature.split(",") if p.strip()]
-            # collect v1 signatures (base64)
-            v1_sigs = [p.split(",", 1)[1] for p in parts if p.startswith("v1,") and "," in p]
+            # svix-signature may contain multiple entries; extract v1 signatures robustly
+            import re
+
+            # find all base64 signatures for v1 entries without splitting the header incorrectly
+            v1_sigs = re.findall(r'r?v1,([^,\s]+)', svix_signature or '')
+            if not v1_sigs:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No v1 svix signature found")
+
             if not svix_timestamp:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing svix-timestamp header")
 
