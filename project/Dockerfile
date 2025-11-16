@@ -20,3 +20,6 @@ RUN pip install -r requirements.txt
 
 # add app
 COPY . .
+
+# Start uvicorn using PORT env var (Render injects this)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]

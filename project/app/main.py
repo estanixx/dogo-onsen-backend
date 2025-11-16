@@ -8,9 +8,9 @@ from app.routes import ServiceRouter, EmployeeRouter
 
 app = FastAPI()
 
-# Configure CORS origins via env var `CORS_ORIGINS` (comma-separated).
+# Configure CORS origins via env var `CORS_ALLOW_ORIGINS` (comma-separated).
 # If not provided, allow common localhost dev origins.
-origins_env = os.getenv("CORS_ORIGINS")
+origins_env = os.getenv("CORS_ALLOW_ORIGINS")
 if origins_env:
     origins = [o.strip() for o in origins_env.split(",") if o.strip()]
 else:
@@ -35,3 +35,8 @@ app.include_router(EmployeeRouter, prefix="/employee", tags=["employee"])
 @app.get("/ping")
 async def pong():
     return {"ping": "pong!"}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
