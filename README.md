@@ -17,11 +17,6 @@ Sanity check: [http://localhost:8004/ping](http://localhost:8004/ping)
 
 ## Configuration
 
-Environment variables:
-
-- `DATABASE_URL`: Postgres DSN (defaults to the compose service).
-- `CORS_ALLOW_ORIGINS`: Comma-separated origins allowed to call the API. Defaults to `http://localhost:3000` so the Next.js app can talk to the backend via the new API routes.
-
 ## Employee API
 
 | Method | Path                   | Description                         |
