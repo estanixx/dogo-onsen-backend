@@ -3,9 +3,10 @@ set -e
 
 echo "Entry point: running database migrations"
 
-# Ensure DATABASE_URL uses asyncpg dialect if necessary
+# Ensure DATABASE_URL uses asyncpg dialect if necessary (POSIX-safe)
 if [ -n "$DATABASE_URL" ] && echo "$DATABASE_URL" | grep -q '^postgresql://'; then
-  export DATABASE_URL="${DATABASE_URL/postgresql:\/\//postgresql+asyncpg:\/\/}"
+  DATABASE_URL=$(printf '%s' "$DATABASE_URL" | sed 's|^postgresql://|postgresql+asyncpg://|')
+  export DATABASE_URL
 fi
 
 if [ -x ./migrate.sh ]; then

@@ -24,4 +24,4 @@ COPY . .
 # Make sure entrypoint is executable and use it as the container command
 RUN chmod +x ./entrypoint.sh ./migrate.sh || true
 
-CMD ["sh", "-c", "./entrypoint.sh"]
+CMD ["./entrypoint.sh"]
