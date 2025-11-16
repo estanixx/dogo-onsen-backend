@@ -6,6 +6,7 @@ services:
     dockerContext: ./project
     plan: free
     healthCheckPath: /health
+    preDeployCommand: "./migrate.sh"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
