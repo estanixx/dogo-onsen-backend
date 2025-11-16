@@ -129,22 +129,36 @@ async def _ensure_clerk_id_is_unique(clerk_id: str, session: AsyncSession) -> No
 @EmployeeRouter.post("/webhook/clerk")
 async def clerk_webhook(
     request: Request,
-    clerk_signature: str | None = Header(None, alias="Clerk-Signature"),
+    svix_signature: str | None = Header(None, alias="svix-signature"),
+    svix_timestamp: str | None = Header(None, alias="svix-timestamp"),
     session: AsyncSession = Depends(get_session),
 ):
     body = await request.body()
 
-    secret = os.getenv("CLERK_WEBHOOK_SECRET")
+    # support both env var names used in docs and earlier code
+    secret = os.getenv("CLERK_WEBHOOK_SIGNING_SECRET") or os.getenv("CLERK_WEBHOOK_SECRET")
     if secret:
-        if not clerk_signature:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing signature")
-        import hashlib
-        import hmac
+        # Prefer Svix-style signatures (Clerk uses Svix under the hood).
+        if svix_signature:
+            import base64
+            import hashlib
+            import hmac
 
-        expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-        provided_values = [part.strip() for part in clerk_signature.split(",")] if clerk_signature else []
-        if expected != clerk_signature and expected not in provided_values:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature")
+            # svix-signature can contain multiple comma-separated entries like "v1,<sig>"
+            parts = [p.strip() for p in svix_signature.split(",") if p.strip()]
+            # collect v1 signatures (base64)
+            v1_sigs = [p.split(",", 1)[1] for p in parts if p.startswith("v1,") and "," in p]
+            if not svix_timestamp:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing svix-timestamp header")
+
+            signed_payload = svix_timestamp.encode() + b"." + body
+            computed = hmac.new(secret.encode(), signed_payload, hashlib.sha256).digest()
+            computed_b64 = base64.b64encode(computed).decode()
+            # constant-time comparison
+            if not any(hmac.compare_digest(computed_b64, s) for s in v1_sigs):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid svix signature")
+        else:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing signature")
 
     payload = await request.json()
     user = _extract_user_from_payload(payload)
