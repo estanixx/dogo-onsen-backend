@@ -11,16 +11,25 @@ EmployeeRouter = APIRouter()
 
 
 def _extract_user_from_payload(payload: dict) -> dict:
-    # Clerk webhook payload may nest the user in different keys. Try common locations.
     if not payload:
         return {}
-    if isinstance(payload.get("data"), dict) and isinstance(payload["data"].get("object"), dict):
-        return payload["data"]["object"]
+    # Clerk may send the user in several shapes. Common shapes:
+    # 1) { data: { object: { ...user... } } }
+    # 2) { data: { ...user... } }  <-- this is what Clerk test events sometimes send
+    # 3) { user: { ... } } or { object: { ... } }
+    data = payload.get("data")
+    if isinstance(data, dict):
+        # prefer data.object when present
+        obj = data.get("object")
+        if isinstance(obj, dict):
+            return obj
+        # if data itself looks like a user (has id), return it
+        if data.get("id"):
+            return data
     if isinstance(payload.get("user"), dict):
         return payload["user"]
     if isinstance(payload.get("object"), dict):
         return payload["object"]
-    # fallback: maybe payload itself is the user
     return payload
 
 
@@ -78,11 +87,7 @@ async def get_employee(clerk_id: str, session: AsyncSession = Depends(get_sessio
 
 @EmployeeRouter.get("/clerk/{clerk_id}", response_model=Employee)
 async def get_employee_by_clerk_id(clerk_id: str, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Employee).where(Employee.clerkId == clerk_id))
-    employee = result.scalars().first()
-    if not employee:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
-    return employee
+    return await _get_employee_or_404(clerk_id, session)
 
 
 @EmployeeRouter.put("/{clerk_id}", response_model=Employee)
@@ -132,50 +137,37 @@ async def _ensure_clerk_id_is_unique(clerk_id: str, session: AsyncSession) -> No
         )
 
 
-
-# Webhook endpoint for Clerk to sync users into the employee table.
-# If CLERK_WEBHOOK_SECRET is set, the header 'Clerk-Signature' must match the
-# HMAC-SHA256 of the raw request body using that secret. If not set, signature
-# verification is skipped (useful for local testing).
 @EmployeeRouter.post("/webhook/clerk")
 async def clerk_webhook(
     request: Request,
-    clerk_signature: str | None = Header(None, alias="Clerk-Signature"),
+    svix_signature: str | None = Header(None, alias="svix-signature"),
+    svix_timestamp: str | None = Header(None, alias="svix-timestamp"),
     session: AsyncSession = Depends(get_session),
 ):
     body = await request.body()
 
     secret = os.getenv("CLERK_WEBHOOK_SECRET")
-    if secret:
-        if not clerk_signature:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing signature")
-        import hmac, hashlib
-
-        expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-        # allow signature header to contain the hex directly or in a prefixed form
-        if expected != clerk_signature and expected not in (s.strip() for s in clerk_signature.split(",")):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature")
+    if not secret or not svix_signature:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing signature")
 
     payload = await request.json()
+    
     user = _extract_user_from_payload(payload)
     if not user or not user.get("id"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook payload: user not found")
 
     emp_payload = _map_clerk_user_to_employee_payload(user)
 
-    # Upsert: find existing by clerkId, else create
     result = await session.execute(select(Employee).where(Employee.clerkId == emp_payload["clerkId"]))
     existing = result.scalars().first()
     if existing:
-        # update fields
-        for k, v in emp_payload.items():
-            setattr(existing, k, v)
+        for key, value in emp_payload.items():
+            setattr(existing, key, value)
         session.add(existing)
         await session.commit()
         await session.refresh(existing)
         return {"ok": True, "action": "updated", "clerkId": emp_payload["clerkId"]}
 
-    # create new employee
     new_emp = Employee(**emp_payload)
     session.add(new_emp)
     await session.commit()
