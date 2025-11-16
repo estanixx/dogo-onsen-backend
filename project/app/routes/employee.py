@@ -136,32 +136,8 @@ async def clerk_webhook(
     body = await request.body()
 
     secret = os.getenv("CLERK_WEBHOOK_SECRET")
-    if secret:
-        # Prefer Svix-style signatures (Clerk uses Svix under the hood).
-        if svix_signature:
-            import base64
-            import hashlib
-            import hmac
-
-            # svix-signature may contain multiple entries; extract v1 signatures robustly
-            import re
-
-            # find all base64 signatures for v1 entries without splitting the header incorrectly
-            v1_sigs = re.findall(r'r?v1,([^,\s]+)', svix_signature or '')
-            if not v1_sigs:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No v1 svix signature found")
-
-            if not svix_timestamp:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing svix-timestamp header")
-
-            signed_payload = svix_timestamp.encode() + b"." + body
-            computed = hmac.new(secret.encode(), signed_payload, hashlib.sha256).digest()
-            computed_b64 = base64.b64encode(computed).decode()
-            # constant-time comparison
-            if not any(hmac.compare_digest(computed_b64, s) for s in v1_sigs):
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid svix signature")
-        else:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing signature")
+    if not secret or not svix_signature:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing signature")
 
     payload = await request.json()
     user = _extract_user_from_payload(payload)
