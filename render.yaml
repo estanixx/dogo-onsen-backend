@@ -24,4 +24,4 @@ databases:
   - name: dogo-onsen-db
     databaseName: dogo_onsen
     user: dogo_admin
-    plan: starter
+    plan: free
