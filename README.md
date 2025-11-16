@@ -24,16 +24,19 @@ Environment variables:
 
 ## Employee API
 
-| Method | Path                   | Description                         |
-|--------|------------------------|-------------------------------------|
-| GET    | `/employee`            | List employees (supports filters).  |
-| POST   | `/employee`            | Create a new employee entry.        |
-| GET    | `/employee/{id}`       | Retrieve an employee by ID.         |
-| PUT    | `/employee/{id}`       | Update employee fields.             |
-| DELETE | `/employee/{id}`       | Remove an employee.                 |
-| GET    | `/employee/clerk/{id}` | Look up an employee by Clerk user.  |
+| Method | Path                          | Description                                      |
+|--------|-------------------------------|--------------------------------------------------|
+| GET    | `/employee`                   | List employees (filter by domain state or Clerk).|
+| POST   | `/employee`                   | Create/update domain data for a Clerk user.      |
+| GET    | `/employee/{clerkId}`         | Retrieve an employee entry by Clerk ID.          |
+| PUT    | `/employee/{clerkId}`         | Update `estado` and `tareasAsignadas`.           |
+| DELETE | `/employee/{clerkId}`         | Remove the local state row for a Clerk ID.       |
+| POST   | `/employee/webhook/clerk`     | Clerk webhook to sync identity metadata.         |
 
-Filtering supported via query parameters: `role`, `access_status`, and `clerk_id`.
+Filtering supported via query parameters: `estado` and `clerk_id`.
+
+The database now stores only `estado` (workflow state) and `tareasAsignadas` per employee.
+Identity is sourced from Clerk, so the webhook is the preferred way to seed/update rows.
 
 Manual commands
 
