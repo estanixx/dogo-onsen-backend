@@ -15,29 +15,20 @@ docker-compose exec web alembic upgrade head
 
 Sanity check: [http://localhost:8004/ping](http://localhost:8004/ping)
 
-## Configuration
 
-## Employee API
 
-| Method | Path                   | Description                         |
-|--------|------------------------|-------------------------------------|
-| GET    | `/employee`            | List employees (supports filters).  |
-| POST   | `/employee`            | Create a new employee entry.        |
-| GET    | `/employee/{id}`       | Retrieve an employee by ID.         |
-| PUT    | `/employee/{id}`       | Update employee fields.             |
-| DELETE | `/employee/{id}`       | Remove an employee.                 |
-| GET    | `/employee/clerk/{id}` | Look up an employee by Clerk user.  |
-
-Filtering supported via query parameters: `role`, `access_status`, and `clerk_id`.
-
-Manual commands
+## Manual commands
 
 - Create migration inside running container:
   `docker compose exec web alembic revision --autogenerate -m "describe change"`
 - Apply migrations inside running container:
   `docker compose exec web alembic upgrade head`
+- Undo last migration:
+  `docker compose exec web alembic downgrade -1`
+- Reset all migrations (downgrade to base):
+  `docker compose exec web alembic downgrade base`
 
-pgAdmin (web UI for Postgres)
+## pgAdmin (web UI for Postgres)
 
 - The compose setup includes `pgadmin` exposed on port `8080`.
 - Default credentials:
@@ -50,7 +41,7 @@ pgAdmin (web UI for Postgres)
   - Username: `postgres`
   - Password: `postgres`
 
-Usage example (compose):
+## Usage example (compose):
 
 ```sh
 # bring containers up

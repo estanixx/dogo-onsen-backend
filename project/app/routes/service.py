@@ -3,7 +3,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
-from app.models.service import Service, ServiceCreate
+from app.models.service import Service, ServiceCreate, ServiceUpdate
 
 ServiceRouter = APIRouter()
 
@@ -34,13 +34,13 @@ async def get_service(service_id: str, session: AsyncSession = Depends(get_sessi
 
 
 @ServiceRouter.put("/{service_id}", response_model=Service)
-async def update_service(service_id: str, service: ServiceCreate, session: AsyncSession = Depends(get_session)):
+async def update_service(service_id: str, service: ServiceUpdate, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Service).where(Service.id == service_id))
     svc = result.scalars().first()
     if not svc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service not found")
 
-    svc_data = service.dict()
+    svc_data = service.dict(exclude_unset=True)
     for key, value in svc_data.items():
         setattr(svc, key, value)
 
