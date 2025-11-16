@@ -1,8 +1,8 @@
 """database_v1
 
-Revision ID: 66ca29618169
+Revision ID: 97094936c6c1
 Revises: 
-Create Date: 2025-11-16 18:20:30.750192
+Create Date: 2025-11-16 18:22:42.571356
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel             # NEW
 
 
 # revision identifiers, used by Alembic.
-revision = '66ca29618169'
+revision = '97094936c6c1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,32 +26,18 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('employee',
-    sa.Column('organizationIds', sa.JSON(), server_default='[]', nullable=False),
-    sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('tareas_asignadas', sa.JSON(), server_default='[]', nullable=False),
+    sa.Column('estado', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('clerkId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('emailAddress', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('firstName', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('lastName', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('fullName', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('imageUrl', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('role', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('accessStatus', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('clerkId', name='uq_employee_clerk_id'),
-    sa.UniqueConstraint('emailAddress', name='uq_employee_email')
+    sa.PrimaryKeyConstraint('clerkId')
     )
     op.create_index(op.f('ix_employee_clerkId'), 'employee', ['clerkId'], unique=False)
-    op.create_index(op.f('ix_employee_emailAddress'), 'employee', ['emailAddress'], unique=False)
     op.create_table('service',
     sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('eiltRate', sa.Float(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('rating', sa.Float(), nullable=False),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -85,7 +71,6 @@ def downgrade() -> None:
     op.drop_table('reservation')
     op.drop_table('banquet_seat')
     op.drop_table('service')
-    op.drop_index(op.f('ix_employee_emailAddress'), table_name='employee')
     op.drop_index(op.f('ix_employee_clerkId'), table_name='employee')
     op.drop_table('employee')
     op.drop_table('banquet_table')
