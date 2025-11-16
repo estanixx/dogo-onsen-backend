@@ -21,5 +21,7 @@ RUN pip install -r requirements.txt
 # add app
 COPY . .
 
-# Start uvicorn using PORT env var (Render injects this)
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]
+# Make sure entrypoint is executable and use it as the container command
+RUN chmod +x ./entrypoint.sh ./migrate.sh || true
+
+CMD ["sh", "-c", "./entrypoint.sh"]
