@@ -13,8 +13,19 @@ EmployeeRouter = APIRouter()
 def _extract_user_from_payload(payload: dict) -> dict:
     if not payload:
         return {}
-    if isinstance(payload.get("data"), dict) and isinstance(payload["data"].get("object"), dict):
-        return payload["data"]["object"]
+    # Clerk may send the user in several shapes. Common shapes:
+    # 1) { data: { object: { ...user... } } }
+    # 2) { data: { ...user... } }  <-- this is what Clerk test events sometimes send
+    # 3) { user: { ... } } or { object: { ... } }
+    data = payload.get("data")
+    if isinstance(data, dict):
+        # prefer data.object when present
+        obj = data.get("object")
+        if isinstance(obj, dict):
+            return obj
+        # if data itself looks like a user (has id), return it
+        if data.get("id"):
+            return data
     if isinstance(payload.get("user"), dict):
         return payload["user"]
     if isinstance(payload.get("object"), dict):
@@ -140,6 +151,7 @@ async def clerk_webhook(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing signature")
 
     payload = await request.json()
+    
     user = _extract_user_from_payload(payload)
     if not user or not user.get("id"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook payload: user not found")
