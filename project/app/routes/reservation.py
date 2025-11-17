@@ -4,8 +4,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
 from app.models.reservation import Reservation, ReservationCreate, ReservationUpdate
+from datetime import datetime, date, time, timedelta, timezone
+from fastapi import Body
 
 ReservationRouter = APIRouter()
+from app.models.utils import DateRequest
 
 
 @ReservationRouter.get("/", response_model=list[Reservation])
@@ -24,6 +27,32 @@ async def create_reservation(reservation: ReservationCreate, session: AsyncSessi
     await session.commit()
     await session.refresh(r)
     return r
+
+
+
+@ReservationRouter.post("/banquet-by-date", response_model=list[Reservation])
+async def get_banquet_reservations_for_date(payload: DateRequest = Body(...), session: AsyncSession = Depends(get_session)):
+    """Return all reservations that have a seatId for the given date.
+
+    The request body must be JSON: { "date": "YYYY-MM-DD" } or any ISO date/time string.
+    The server treats the date as UTC date and returns reservations whose startTime
+    falls within that UTC date (00:00:00 <= startTime < next day).
+    """
+    # parse date (accept YYYY-MM-DD or full ISO datetime)
+    try:
+        if len(payload.date) <= 10 and "-" in payload.date:
+            d = date.fromisoformat(payload.date)
+        else:
+            d = datetime.fromisoformat(payload.date).date()
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format. Use YYYY-MM-DD or ISO datetime.")
+
+    start_dt = datetime.combine(d, time.min).replace(tzinfo=timezone.utc)
+    end_dt = start_dt + timedelta(days=1)
+
+    q = select(Reservation).where(Reservation.seatId != None).where(Reservation.startTime >= start_dt).where(Reservation.startTime < end_dt)
+    result = await session.execute(q)
+    return result.scalars().all()
 
 
 @ReservationRouter.get("/{reservation_id}", response_model=Reservation)
@@ -62,3 +91,5 @@ async def delete_reservation(reservation_id: str, session: AsyncSession = Depend
     await session.delete(r)
     await session.commit()
     return None
+
+

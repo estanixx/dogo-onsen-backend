@@ -6,13 +6,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes import ServiceRouter, EmployeeRouter
 from app.routes.banquet import BanquetRouter
 from app.routes.reservation import ReservationRouter
-
+from app.routes.spirit import SpiritRouter
+from app.routes.spirit_type import SpiritTypeRouter
 
 app = FastAPI()
 
 # Configure CORS origins via env var `CORS_ORIGINS` (comma-separated).
 # If not provided, allow common localhost dev origins.
 origins_env = os.getenv("CORS_ORIGINS")
+
 if origins_env:
     origins = [o.strip() for o in origins_env.split(",") if o.strip()]
 else:
@@ -34,7 +36,8 @@ app.include_router(ServiceRouter, prefix="/service", tags=["service"])
 app.include_router(EmployeeRouter, prefix="/employee", tags=["employee"])
 app.include_router(BanquetRouter, prefix="/banquet", tags=["banquet"])
 app.include_router(ReservationRouter, prefix="/reservation", tags=["reservation"])
-
+app.include_router(SpiritRouter, prefix="/spirit", tags=["spirit"])
+app.include_router(SpiritTypeRouter, prefix="/spirit_type", tags=["spirit_type"])
 
 @app.get("/ping")
 async def pong():

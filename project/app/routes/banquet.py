@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.db import get_session
 from app.models import (
@@ -19,6 +20,8 @@ BanquetRouter = APIRouter()
 async def list_tables(session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(BanquetTable))
     tables = result.scalars().all()
+    for t in tables:
+        await session.refresh(t, attribute_names=["availableSeats"])
     return tables
 
 

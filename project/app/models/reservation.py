@@ -1,15 +1,18 @@
 
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+from pydantic import root_validator
 import uuid
 from app.models.service import Service
 from app.models.banquet_seat import BanquetSeat
 from datetime import datetime
 from sqlalchemy import Column, JSON, DateTime, func
 
+if TYPE_CHECKING:
+    from app.models.venue_account import VenueAccount
 
 class ReservationBase(SQLModel):
-    accountId: str # TODO: Relationship to VenueAccount
+    accountId: str = Field(foreign_key="venue_account.id") 
     startTime: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     endTime: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False)) # TODO: validate endTime > startTime
     seatId: Optional[int] = Field(default=None, foreign_key="banquet_seat.id")
@@ -17,9 +20,18 @@ class ReservationBase(SQLModel):
     
     isRedeemed: bool = False
     isRated: bool = False
-    # TODO: rating: Optional[float] = None
+    rating: Optional[float] = None
     # Storing account details as JSON for now (VenueAccount not modelled here)
-    # TODO: account: Optional[dict] = Field(default=None, sa_column=Column(JSON), nullable=True)
+
+    @root_validator
+    def validate_times(cls, values):
+        start = values.get("startTime")
+        end = values.get("endTime")
+        if start is not None and end is not None:
+            # both provided: ensure end > start
+            if end <= start:
+                raise ValueError("endTime must be after startTime")
+        return values
 
 
 class Reservation(ReservationBase, table=True):
@@ -36,6 +48,7 @@ class Reservation(ReservationBase, table=True):
     )
 
     # Relationships
+    account: Optional["VenueAccount"] = Relationship(back_populates="reservations")
     service: Optional["Service"] = Relationship(back_populates="reservations")
     seat: Optional["BanquetSeat"] = Relationship(back_populates="reservations")
 

@@ -44,3 +44,14 @@ Filtering supported via query parameters: `role`, `access_status`, and `clerk_id
 | DELETE | `/banquet/table/{id}`       | Remove a table with its seats.                 |
 | GET    | `/banquet/seat`            | List all seats. |
 | GET    | `/banquet/seat/{id}`       | Retrieve a seat by ID.         |
+
+
+## Spirit API
+
+| Method | Path                   | Description                         |
+|--------|------------------------|-------------------------------------|
+| GET    | `/spirit`              | List spirits.                       |
+| POST   | `/spirit`              | Create a new spirit entry.          |
+| GET    | `/spirit/{id}`         | Retrieve a spirit by ID.            |
+| PUT    | `/spirit/{id}`         | Update spirit fields.               |
+| DELETE | `/spirit/{id}`         | Remove a spirit.                    |

@@ -15,7 +15,7 @@ class BanquetTable(BanquetTableBase, table=True):
     """Represents a banquet table and its seats."""
     __tablename__ = "banquet_table"
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
-    availableSeats: List["BanquetSeat"] = Relationship(back_populates="table", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    availableSeats: List["BanquetSeat"] = Relationship(back_populates="table", sa_relationship_kwargs={"cascade": "all, delete-orphan", "lazy": "selectin"})
     # TODO: occupies
     
 

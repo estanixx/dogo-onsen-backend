@@ -8,6 +8,8 @@ services:
       - ./project:/usr/src/app
     ports:
       - 8004:8000
+    env_file:
+      - ./.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/foo
     depends_on:
@@ -25,7 +27,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4:7
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@local
+      PGADMIN_DEFAULT_EMAIL: admin@local.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - 8080:80
