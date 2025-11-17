@@ -15,6 +15,7 @@ bookService(
 )
 ```
 [x] `getBanquetReservationsForDate(date: string)`
+[ ] `getBanquetTables()` for date
 [ ] `createBanquetReservation({tableId, seatNumber, date, time, accountId})`
 [ ] Display availableSeats and rationsconsumed `getBanquetTables()`
 [ ] `getReservations({serviceId, date, timeSlot})`

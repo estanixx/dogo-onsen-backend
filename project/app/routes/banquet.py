@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy import outerjoin
+from typing import List
 
 from app.db import get_session
 from app.models import (
@@ -11,21 +13,22 @@ from app.models import (
     BanquetSeat,
     BanquetSeatCreate,
     BanquetSeatUpdate,
+    BanquetTableRead,
+    BanquetSeatRead,
 )
 
 BanquetRouter = APIRouter()
 
 
-@BanquetRouter.get("/table/", response_model=list[BanquetTable])
+@BanquetRouter.get("/table/", response_model=List[BanquetTableRead])
 async def list_tables(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(BanquetTable))
-    tables = result.scalars().all()
-    for t in tables:
-        await session.refresh(t, attribute_names=["availableSeats"])
+    # Load tables and their seats using selectinload
+    res = await session.exec(select(BanquetTable).options(selectinload(BanquetTable.availableSeats)))
+    tables = res.all()
     return tables
 
 
-@BanquetRouter.post("/table/", response_model=BanquetTable, status_code=status.HTTP_201_CREATED)
+@BanquetRouter.post("/table/", response_model=BanquetTableRead, status_code=status.HTTP_201_CREATED)
 async def create_table(table: BanquetTableCreate, session: AsyncSession = Depends(get_session)):
     t = BanquetTable(**table.dict())
     session.add(t)
@@ -47,24 +50,27 @@ async def create_table(table: BanquetTableCreate, session: AsyncSession = Depend
 
     if seats:
         await session.commit()
-        # refresh created seats and the table to populate relationships
+        # refresh created seats
         for s in seats:
             await session.refresh(s)
-        await session.refresh(t)
 
-    return t
+    # refresh table and return with loaded seats
+    await session.refresh(t)
+    res = await session.exec(select(BanquetTable).where(BanquetTable.id == t.id).options(selectinload(BanquetTable.availableSeats)))
+    table_obj = res.first()
+    return table_obj
 
 
-@BanquetRouter.get("/table/{table_id}", response_model=BanquetTable)
+@BanquetRouter.get("/table/{table_id}", response_model=BanquetTableRead)
 async def get_table(table_id: str, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(BanquetTable).where(BanquetTable.id == table_id))
-    t = result.scalars().first()
+    res = await session.exec(select(BanquetTable).where(BanquetTable.id == table_id).options(selectinload(BanquetTable.availableSeats)))
+    t = res.first()
     if not t:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Table not found")
     return t
 
 
-@BanquetRouter.put("/table/{table_id}", response_model=BanquetTable)
+@BanquetRouter.put("/table/{table_id}", response_model=BanquetTableRead)
 async def update_table(table_id: str, table: BanquetTableUpdate, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(BanquetTable).where(BanquetTable.id == table_id))
     t = result.scalars().first()
@@ -93,7 +99,7 @@ async def delete_table(table_id: str, session: AsyncSession = Depends(get_sessio
     return None
 
 
-@BanquetRouter.get("/seat/", response_model=list[BanquetSeat])
+@BanquetRouter.get("/seat/", response_model=List[BanquetSeatRead])
 async def list_seats(tableId: str | None = None, session: AsyncSession = Depends(get_session)):
     q = select(BanquetSeat)
     if tableId:
@@ -104,7 +110,7 @@ async def list_seats(tableId: str | None = None, session: AsyncSession = Depends
 
 
 
-@BanquetRouter.get("/seat/{seat_id}", response_model=BanquetSeat)
+@BanquetRouter.get("/seat/{seat_id}", response_model=BanquetSeatRead)
 async def get_seat(seat_id: int, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(BanquetSeat).where(BanquetSeat.id == seat_id))
     s = result.scalars().first()

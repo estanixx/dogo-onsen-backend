@@ -1,5 +1,5 @@
 
-from sqlmodel import SQLModel, Field, Relationship, String, ForeignKey
+from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import Column
 
@@ -31,5 +31,11 @@ class BanquetSeatUpdate(SQLModel):
     seatNumber: Optional[int] = None
     # TODO: rationsConsumed: Optional[int] = None
     tableId: Optional[str] = None
+
+
+class BanquetSeatRead(SQLModel):
+    id: Optional[int]
+    tableId: str
+    seatNumber: int
 
 
