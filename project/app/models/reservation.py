@@ -65,5 +65,5 @@ class ReservationUpdate(SQLModel):
     serviceId: Optional[str] = None
     isRedeemed: Optional[bool] = None
     isRated: Optional[bool] = None
-    # TODO: rating: Optional[float] = None
+    rating: Optional[float] = None
     # TODO: account: Optional[dict] = None

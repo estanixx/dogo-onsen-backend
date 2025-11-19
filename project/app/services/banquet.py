@@ -1,0 +1,144 @@
+from typing import List, Optional, Dict
+from datetime import date, datetime, time, timedelta, timezone
+from sqlmodel import select
+from sqlalchemy.orm import selectinload
+
+from app.models import BanquetTable, BanquetSeat
+
+
+class BanquetService:
+    """Service layer for banquet-related DB operations.
+
+    All methods are async and expect an `AsyncSession` passed from the caller.
+    """
+
+    @staticmethod
+    async def list_tables(session) -> List[BanquetTable]:
+        res = await session.exec(select(BanquetTable).options(selectinload(BanquetTable.availableSeats)))
+        return res.all()
+
+    @staticmethod
+    async def list_available_seats(spirit_id: str, start_dt: datetime, session) -> List[Dict]:
+        # Parse incoming date/datetime and normalize to UTC
+        
+
+        end_dt = start_dt + timedelta(hours=1)
+
+        # Load tables with seats
+        res = await session.exec(select(BanquetTable).options(selectinload(BanquetTable.availableSeats)))
+        tables = res.all()
+
+        # Collect seat ids to find overlapping reservations
+        seat_ids = [s.id for t in tables for s in getattr(t, "availableSeats", []) if s.id is not None]
+
+        reservations_map = {}
+        if seat_ids:
+            from app.models.reservation import Reservation
+            from app.models.venue_account import VenueAccount
+            from app.models.spirit import Spirit
+
+            q = select(Reservation).where(
+                Reservation.seatId.in_(seat_ids),
+                Reservation.startTime < end_dt,
+                Reservation.endTime > start_dt,
+            ).options(
+                selectinload(Reservation.account).selectinload(VenueAccount.spirit).selectinload(Spirit.type)
+            )
+            res2 = await session.exec(q)
+            found = res2.all()
+            # Map seatId -> first matching reservation
+            for r in found:
+                if r.seatId not in reservations_map:
+                    reservations_map[r.seatId] = r
+
+        out_tables = []
+        for t in tables:
+            tbl = t.dict()
+            occupies = []
+            seats_out = []
+            for s in getattr(t, "availableSeats", []) or []:
+                seat_d = s.dict()
+                resv = reservations_map.get(s.id)
+                if resv:
+                    seat_d["reservationId"] = resv.id
+                    acct = getattr(resv, "account", None)
+                    if acct and getattr(acct, "spirit", None):
+                        sp = acct.spirit
+                        sp_d = sp.dict()
+                        if getattr(sp, "type", None):
+                            sp_d["type"] = sp.type.dict()
+                        occupies.append(sp_d)
+                seats_out.append(seat_d)
+            tbl["availableSeats"] = seats_out
+            tbl["occupies"] = occupies
+            out_tables.append(tbl)
+
+        return out_tables
+
+    @staticmethod
+    async def create_table(table_create, session) -> BanquetTable:
+        t = BanquetTable(**table_create.dict())
+        session.add(t)
+        await session.commit()
+        await session.refresh(t)
+
+        # auto-create seats
+        seats = []
+        try:
+            cap = int(t.capacity) if t.capacity and t.capacity > 0 else 0
+        except Exception:
+            cap = 0
+        for i in range(1, cap + 1):
+            s = BanquetSeat(tableId=t.id, seatNumber=i)
+            session.add(s)
+            seats.append(s)
+        if seats:
+            await session.commit()
+            for s in seats:
+                await session.refresh(s)
+
+        await session.refresh(t)
+        res = await session.exec(select(BanquetTable).where(BanquetTable.id == t.id).options(selectinload(BanquetTable.availableSeats)))
+        return res.first()
+
+    @staticmethod
+    async def get_table(table_id: str, session) -> Optional[BanquetTable]:
+        res = await session.exec(select(BanquetTable).where(BanquetTable.id == table_id).options(selectinload(BanquetTable.availableSeats)))
+        return res.first()
+
+    @staticmethod
+    async def update_table(table_id: str, table_update, session) -> Optional[BanquetTable]:
+        result = await session.exec(select(BanquetTable).where(BanquetTable.id == table_id))
+        t = result.first()
+        if not t:
+            return None
+        data = table_update.dict(exclude_unset=True)
+        for key, value in data.items():
+            setattr(t, key, value)
+        session.add(t)
+        await session.commit()
+        await session.refresh(t)
+        return t
+
+    @staticmethod
+    async def delete_table(table_id: str, session) -> bool:
+        result = await session.exec(select(BanquetTable).where(BanquetTable.id == table_id))
+        t = result.first()
+        if not t:
+            return False
+        await session.delete(t)
+        await session.commit()
+        return True
+
+    @staticmethod
+    async def list_seats(tableId: Optional[str], session) -> List[BanquetSeat]:
+        q = select(BanquetSeat)
+        if tableId:
+            q = q.where(BanquetSeat.tableId == tableId)
+        res = await session.exec(q)
+        return res.all()
+
+    @staticmethod
+    async def get_seat(seat_id: int, session) -> Optional[BanquetSeat]:
+        res = await session.exec(select(BanquetSeat).where(BanquetSeat.id == seat_id))
+        return res.first()

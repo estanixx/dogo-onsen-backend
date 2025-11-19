@@ -39,3 +39,11 @@ class BanquetSeatRead(SQLModel):
     seatNumber: int
 
 
+class AvailableBanquetSeatRead(BanquetSeatRead):
+    reservationId: Optional[str] = None
+    available: bool = True
+
+
+
+
+

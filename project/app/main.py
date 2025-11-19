@@ -3,11 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import ServiceRouter, EmployeeRouter
-from app.routes.banquet import BanquetRouter
-from app.routes.reservation import ReservationRouter
-from app.routes.spirit import SpiritRouter
-from app.routes.spirit_type import SpiritTypeRouter
+from app.routes import ServiceRouter, EmployeeRouter, BanquetRouter, ReservationRouter, SpiritRouter, SpiritTypeRouter, FileRouter, VenueAccountRouter
 
 app = FastAPI()
 
@@ -38,6 +34,8 @@ app.include_router(BanquetRouter, prefix="/banquet", tags=["banquet"])
 app.include_router(ReservationRouter, prefix="/reservation", tags=["reservation"])
 app.include_router(SpiritRouter, prefix="/spirit", tags=["spirit"])
 app.include_router(SpiritTypeRouter, prefix="/spirit_type", tags=["spirit_type"])
+app.include_router(FileRouter, prefix="/files", tags=["files"])
+app.include_router(VenueAccountRouter, prefix="/venue_account", tags=["venue_account"])
 
 @app.get("/ping")
 async def pong():

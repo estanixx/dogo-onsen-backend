@@ -23,6 +23,7 @@ class VenueAccount(VenueAccountBase, table=True):
     spirit: "Spirit" = Relationship(back_populates="venueAccounts")
 
 
+
 class VenueAccountCreate(VenueAccountBase):
     pass
 
