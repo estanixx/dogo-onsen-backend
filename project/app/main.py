@@ -3,7 +3,19 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import ServiceRouter, EmployeeRouter, BanquetRouter, ReservationRouter, SpiritRouter, SpiritTypeRouter, FileRouter, VenueAccountRouter
+from app.routes import (
+    ServiceRouter,
+    EmployeeRouter,
+    BanquetRouter,
+    ReservationRouter,
+    SpiritRouter,
+    SpiritTypeRouter,
+    FileRouter,
+    VenueAccountRouter,
+    ItemRouter,
+    ItemIntakeRouter,
+    UtilsRouter,
+)
 
 app = FastAPI()
 
@@ -28,6 +40,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(UtilsRouter, tags=["utils"])
 app.include_router(ServiceRouter, prefix="/service", tags=["service"])
 app.include_router(EmployeeRouter, prefix="/employee", tags=["employee"])
 app.include_router(BanquetRouter, prefix="/banquet", tags=["banquet"])
@@ -36,7 +49,5 @@ app.include_router(SpiritRouter, prefix="/spirit", tags=["spirit"])
 app.include_router(SpiritTypeRouter, prefix="/spirit_type", tags=["spirit_type"])
 app.include_router(FileRouter, prefix="/files", tags=["files"])
 app.include_router(VenueAccountRouter, prefix="/venue_account", tags=["venue_account"])
-
-@app.get("/ping")
-async def pong():
-    return {"ping": "pong!"}
+app.include_router(ItemRouter, prefix="/item", tags=["item"])
+app.include_router(ItemIntakeRouter, prefix="/item_intake", tags=["item_intake"])

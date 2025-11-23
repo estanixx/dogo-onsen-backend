@@ -61,10 +61,25 @@ class FileService:
             minNeighbors=min_neighbors,
             minSize=min_size 
         )
-        return [
-            {"x": int(x), "y": int(y), "w": int(w), "h": int(h)}
-            for (x, y, w, h) in faces
-        ]
+        if len(faces) == 0:
+            raise HTTPException(status_code=400, detail="No se detectó ningún rostro claro. Por favor, tome la foto una vez más.")
+
+        candidates = []
+        for (x, y, w, h) in faces:
+            candidates.append({
+                "x": int(x), "y": int(y), 
+                "w": int(w), "h": int(h),
+                "area": w * h # Calculamos área para saber cuál es más grande
+            })
+
+        # CASO: SE DETECTA 1 O MÁS -> ELEGIR EL MÁS GRANDE
+        # Ordenamos de mayor a menor según el 'area'
+        candidates.sort(key=lambda f: f["area"], reverse=True)
+
+        # Tomamos el primero (el ganador)
+        best_face = candidates[0]
+
+        return [best_face]
 
     @staticmethod
     def upload_file_to_s3_with_face_detection(file: UploadFile) -> Dict:
@@ -74,10 +89,13 @@ class FileService:
         # Reset pointer for any other consumer
         file.file.seek(0)
 
-        file_extension = os.path.splitext(file.filename)[1]
-        file_key = f"{uuid.uuid4()}{file_extension}"
 
         try:
+            faces = FileService.detect_faces(image_bytes)
+
+            file_extension = os.path.splitext(file.filename)[1]
+            file_key = f"users/{uuid.uuid4()}{file_extension}"
+            
             s3_client.upload_fileobj(
                 io.BytesIO(image_bytes),
                 AWS_S3_BUCKET_NAME,
@@ -87,11 +105,12 @@ class FileService:
                     # 'ACL': 'public-read'
                 },
             )
-
+            
             file_url = f"https://{AWS_S3_BUCKET_NAME}.s3.{AWS_S3_REGION}.amazonaws.com/{file_key}"
-            faces = FileService.detect_faces(image_bytes)
             return {"url": file_url, "faces": faces}
 
+        except HTTPException as e:
+            raise e
         except NoCredentialsError:
             raise HTTPException(
                 status_code=500, detail="Credenciales de AWS no encontradas."

@@ -6,6 +6,8 @@ from app.services.service import ServiceService
 from app.services.spirit import SpiritService
 from app.services.spirit_type import SpiritTypeService
 from app.services.venue_account import VenueAccountService
+from app.services.item import ItemService
+from app.services.item_intake import ItemIntakeService
 
 __all__ = [
     "BanquetService",
@@ -16,4 +18,6 @@ __all__ = [
     "SpiritService",
     "SpiritTypeService",
     "VenueAccountService",
+    "ItemService",
+    "ItemIntakeService",
 ]

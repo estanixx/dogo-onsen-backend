@@ -20,7 +20,7 @@ Filtering supported via query parameters: `role`, `access_status`, and `clerk_id
 | GET    | `/service/{id}`       | Retrieve a service by ID.         |
 | PUT    | `/service/{id}`       | Update service fields.             |
 | DELETE | `/service/{id}`       | Remove a service.                 |
-
+/service/{id}/available_time_slots?date={YYYY-MM-DD}'
 
 ## Reservation API
 

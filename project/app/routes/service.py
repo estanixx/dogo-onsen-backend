@@ -5,6 +5,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.db import get_session
 from app.models import Service, ServiceCreate, ServiceUpdate
 from app.services import ServiceService
+from fastapi import Query
 
 ServiceRouter = APIRouter()
 
@@ -53,3 +54,18 @@ async def delete_service(service_id: str, session: AsyncSession = Depends(get_se
             status_code=status.HTTP_404_NOT_FOUND, detail="Service not found"
         )
     return None
+
+
+@ServiceRouter.get("/{service_id}/available_time_slots", response_model=list[str])
+async def available_time_slots(
+    service_id: str,
+    date: str = Query(..., description="Date (YYYY-MM-DD) or ISO datetime"),
+    session: AsyncSession = Depends(get_session),
+):
+    try:
+        slots = await ServiceService.get_available_time_slots(service_id, date, session)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format"
+        )
+    return slots

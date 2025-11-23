@@ -10,7 +10,9 @@ if TYPE_CHECKING:
 
 class SpiritTypeBase(SQLModel):
     name: str = Field(nullable=False)
+    kanji: str = Field(nullable=False)
     dangerScore: int = Field(nullable=False)
+    image: str = Field(nullable=False)
 
 class SpiritType(SpiritTypeBase, table=True):
     __tablename__ = 'spirit_type'
@@ -28,3 +30,4 @@ class SpiritTypeCreate(SpiritTypeBase):
 class SpiritTypeUpdate(SQLModel):
     name: Optional[str] = None
     dangerScore: Optional[int] = None
+    image: Optional[str] = None

@@ -53,10 +53,12 @@ class BanquetService:
 
         out_tables = []
         for t in tables:
+            # Go through each table 
             tbl = t.dict()
             occupies = []
             seats_out = []
             for s in getattr(t, "availableSeats", []) or []:
+                # Go through each seat
                 seat_d = s.dict()
                 resv = reservations_map.get(s.id)
                 if resv:

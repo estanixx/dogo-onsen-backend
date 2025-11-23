@@ -1,10 +1,10 @@
 ## estanix
 [ ] Add rationsConsumed to banquet seat and service
-[ ] Add occupies to banquet table
+[x] Add occupies to banquet table
 [x] Validate endtime > starttime in reservation
 [x] Rating in reservation
 [ ] `getAvailableServices(query?: string)` add query to function to get available services
-[ ] Function to get available time slots for a service of service a specific date `getAvailableTimeSlots(serviceId: string, date: Date)`
+[x] Function to get available time slots for a service of service a specific date `getAvailableTimeSlots(serviceId: string, date: Date)`
 [X] Function to book a service for a venue account at a specific date and time:
 [ ] No reservations after venueaccount ends
 [ ] TODO Restrict access to seat based on compatibility
@@ -21,4 +21,4 @@ bookService(
 [ ] Add venueaccount relationship to reservation
 
 ## juanpa
-[ ] 👍👍👍😎🥶🥶
+[x] 👍👍👍😎🥶🥶

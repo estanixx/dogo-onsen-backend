@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 
 class VenueAccountBase(SQLModel):
     # TODO: Add attributes
-    spiritId: str = Field(foreign_key="spirit.id") 
+    spiritId: str = Field(foreign_key="spirit.id")
+    
 
 
 class VenueAccount(VenueAccountBase, table=True):
@@ -21,6 +22,8 @@ class VenueAccount(VenueAccountBase, table=True):
     # Esto hay que ponerlo?
     reservations: List["Reservation"] = Relationship(back_populates="account")
     spirit: "Spirit" = Relationship(back_populates="venueAccounts")
+    pin: str = Field(nullable=False)
+    
 
 
 

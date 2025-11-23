@@ -1,6 +1,9 @@
 from typing import List, Optional
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
+from datetime import datetime, date, time, timedelta, timezone
+
+from app.core.constants import TIME_SLOTS
 
 from app.models import Service, ServiceCreate, ServiceUpdate
 
@@ -51,3 +54,46 @@ class ServiceService:
         await session.delete(svc)
         await session.commit()
         return True
+
+    @staticmethod
+    async def get_available_time_slots(
+        service_id: str, date_payload: str, session: AsyncSession
+    ) -> List[str]:
+        """Return TIME_SLOTS that are not already reserved for the service on the given date.
+
+        `date_payload` accepts either YYYY-MM-DD or a full ISO datetime string.
+        """
+        try:
+            if len(date_payload) <= 10 and "-" in date_payload:
+                d = date.fromisoformat(date_payload)
+            else:
+                d = datetime.fromisoformat(date_payload).date()
+        except Exception:
+            raise ValueError("Invalid date format")
+
+        start_dt = datetime.combine(d, time.min).replace(tzinfo=timezone.utc)
+        end_dt = start_dt + timedelta(days=1)
+
+        # select reservations for this service on the date
+        from app.models import Reservation
+
+        q = (
+            select(Reservation)
+            .where(Reservation.serviceId == service_id)
+            .where(Reservation.startTime >= start_dt)
+            .where(Reservation.startTime < end_dt)
+        )
+        res = await session.exec(q)
+        reservations = res.all()
+
+        # Format reserved start times to match TIME_SLOTS (e.g. '09:00 AM')
+        reserved_slots = set()
+        for r in reservations:
+            if r.startTime is None:
+                continue
+            # ensure we format in UTC the same way slots are defined
+            ts = r.startTime
+            reserved_slots.add(ts.strftime("%I:%M %p"))
+
+        available = [t for t in TIME_SLOTS if t not in reserved_slots]
+        return available
