@@ -3,13 +3,13 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
-from app.models import Spirit, SpiritCreate, SpiritUpdate
+from app.models import Spirit, SpiritCreate, SpiritUpdate, SpiritRead
 from app.services import SpiritService
 
 SpiritRouter = APIRouter()
 
 
-@SpiritRouter.get("/", response_model=list[Spirit])
+@SpiritRouter.get("/", response_model=list[SpiritRead])
 async def list_spirits(session: AsyncSession = Depends(get_session)):
     return await SpiritService.list_spirits(session)
 
@@ -21,7 +21,7 @@ async def create_spirit(
     return await SpiritService.create_spirit(spirit, session)
 
 
-@SpiritRouter.get("/{spirit_id}", response_model=Spirit)
+@SpiritRouter.get("/{spirit_id}", response_model=SpiritRead)
 async def get_spirit(spirit_id: str, session: AsyncSession = Depends(get_session)):
     s = await SpiritService.get_spirit(spirit_id, session)
     if not s:

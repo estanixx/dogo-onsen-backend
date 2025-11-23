@@ -1,14 +1,14 @@
 from typing import List, Optional
-from sqlmodel import select
+from sqlmodel import select, selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models.spirit import Spirit, SpiritCreate, SpiritUpdate
+from app.models.spirit import Spirit, SpiritCreate, SpiritUpdate, SpiritRead
 
 
 class SpiritService:
     @staticmethod
-    async def list_spirits(session: AsyncSession) -> List[Spirit]:
-        res = await session.exec(select(Spirit))
+    async def list_spirits(session: AsyncSession) -> List[SpiritRead]:
+        res = await session.exec(select(Spirit).options(selectinload(Spirit.type)))
         return res.all()
 
     @staticmethod

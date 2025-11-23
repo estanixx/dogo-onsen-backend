@@ -11,8 +11,8 @@ ServiceRouter = APIRouter()
 
 
 @ServiceRouter.get("/", response_model=list[Service])
-async def list_services(session: AsyncSession = Depends(get_session)):
-    return await ServiceService.list_services(session)
+async def list_services(session: AsyncSession = Depends(get_session), q: str = Query(None)):
+    return await ServiceService.list_services(session, q)
 
 
 @ServiceRouter.post("/", response_model=Service, status_code=status.HTTP_201_CREATED)

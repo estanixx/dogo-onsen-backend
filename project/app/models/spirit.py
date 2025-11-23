@@ -34,7 +34,7 @@ class Spirit(SpiritBase, table=True):
     )
     
     #Relationships
-    type: Optional["SpiritType"] = Relationship(back_populates="spirits")
+    type: "SpiritType" = Relationship(back_populates="spirits")
     venueAccounts: List["VenueAccount"] = Relationship(back_populates="spirit")
 
 
@@ -50,3 +50,9 @@ class SpiritUpdate(SQLModel):
     individualRecord: Optional[str] = None
     image: Optional[str] = None
     active: Optional[bool] = None
+
+class SpiritRead(SpiritBase):
+    id: Optional[str]
+    createdAt: datetime
+    updatedAt: datetime
+    type: "SpiritType"

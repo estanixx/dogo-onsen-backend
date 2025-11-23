@@ -16,7 +16,7 @@ from app.models.banquet_table import (
     AvailableBanquetTableRead,
     AvailableBanquetSeatRead,
 )
-from app.models.spirit import Spirit, SpiritCreate, SpiritUpdate
+from app.models.spirit import Spirit, SpiritCreate, SpiritUpdate, SpiritRead
 from app.models.spirit_type import SpiritType, SpiritTypeCreate, SpiritTypeUpdate
 from app.models.venue_account import (
     VenueAccount,
@@ -55,6 +55,7 @@ __all__ = [
     "Spirit",
     "SpiritCreate",
     "SpiritUpdate",
+    "SpiritRead",
     "SpiritType",
     "SpiritTypeCreate",
     "SpiritTypeUpdate",

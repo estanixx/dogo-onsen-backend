@@ -10,8 +10,8 @@ from app.models import Service, ServiceCreate, ServiceUpdate
 
 class ServiceService:
     @staticmethod
-    async def list_services(session: AsyncSession) -> List[Service]:
-        res = await session.exec(select(Service))
+    async def list_services(session: AsyncSession, q: Optional[str] = None) -> List[Service]:
+        res = await session.exec(select(Service).where(Service.name.contains(q)) if q else select(Service))
         return res.all()
 
     @staticmethod
