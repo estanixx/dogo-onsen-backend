@@ -28,6 +28,9 @@ def upgrade() -> None:
     op.create_table('employee',
     sa.Column('tareas_asignadas', sa.JSON(), server_default='[]', nullable=False),
     sa.Column('estado', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('firstName', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('lastName', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('clerkId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.PrimaryKeyConstraint('clerkId')
     )

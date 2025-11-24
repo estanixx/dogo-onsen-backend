@@ -9,6 +9,7 @@ from app.services.venue_account import VenueAccountService
 from app.services.item import ItemService
 from app.services.item_intake import ItemIntakeService
 from app.services.private_venue import PrivateVenueService
+from app.services.clerk_api import ClerkAPIService
 
 __all__ = [
     "BanquetService",
@@ -22,4 +23,5 @@ __all__ = [
     "ItemService",
     "ItemIntakeService",
     "PrivateVenueService",
+    "ClerkAPIService",
 ]

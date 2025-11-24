@@ -19,7 +19,7 @@ class EmployeeService:
         if clerk_id:
             statement = statement.where(Employee.clerkId == clerk_id)
         result = await session.exec(statement)
-        return result.scalars().all()
+        return result.all()
 
     @staticmethod
     async def create_employee(
@@ -37,7 +37,7 @@ class EmployeeService:
         result = await session.exec(
             select(Employee).where(Employee.clerkId == clerk_id)
         )
-        employee = result.scalars().first()
+        employee = result.first()
         if not employee:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found"
@@ -74,7 +74,7 @@ class EmployeeService:
         result = await session.exec(
             select(Employee).where(Employee.clerkId == clerk_id)
         )
-        if result.scalars().first():
+        if result.first():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Employee already exists with this Clerk ID",
@@ -106,10 +106,19 @@ class EmployeeService:
             tareas = []
         tareas = [str(item) for item in tareas]
 
+        # Extract email from email_addresses array
+        email = None
+        email_addresses = user.get("email_addresses") or []
+        if isinstance(email_addresses, list) and len(email_addresses) > 0:
+            email = email_addresses[0].get("email_address") if isinstance(email_addresses[0], dict) else None
+
         return {
             "clerkId": user.get("id"),
             "estado": estado,
             "tareasAsignadas": tareas,
+            "firstName": user.get("first_name"),
+            "lastName": user.get("last_name"),
+            "email": email,
         }
 
     @staticmethod
@@ -128,7 +137,7 @@ class EmployeeService:
         result = await session.exec(
             select(Employee).where(Employee.clerkId == emp_payload["clerkId"])
         )
-        existing = result.scalars().first()
+        existing = result.first()
         if existing:
             for key, value in emp_payload.items():
                 setattr(existing, key, value)
