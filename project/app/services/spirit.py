@@ -1,5 +1,6 @@
 from typing import List, Optional
-from sqlmodel import select, selectinload
+from sqlmodel import select
+from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.spirit import Spirit, SpiritCreate, SpiritUpdate, SpiritRead

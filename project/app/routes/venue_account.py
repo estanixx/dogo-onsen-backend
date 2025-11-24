@@ -5,6 +5,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.db import get_session
 from app.models import VenueAccount, VenueAccountCreate, VenueAccountUpdate
 from app.services import VenueAccountService
+from fastapi import Depends
+from app.deps.device_cookie import get_device_config, DeviceConfig
 
 VenueAccountRouter = APIRouter()
 
@@ -24,7 +26,11 @@ async def create_account(
 
 
 @VenueAccountRouter.get("/{account_id}", response_model=VenueAccount)
-async def get_account(account_id: str, session: AsyncSession = Depends(get_session)):
+async def get_account(
+    account_id: str,
+    session: AsyncSession = Depends(get_session),
+    device_config: DeviceConfig | None = Depends(get_device_config),
+):
     acct = await VenueAccountService.get_account(account_id, session)
     if not acct:
         raise HTTPException(

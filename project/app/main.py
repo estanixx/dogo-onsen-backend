@@ -2,6 +2,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.middleware.device_cookie_middleware import DeviceCookieMiddleware
 
 from app.routes import (
     ServiceRouter,
@@ -40,6 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(DeviceCookieMiddleware)
 app.include_router(UtilsRouter, tags=["utils"])
 app.include_router(ServiceRouter, prefix="/service", tags=["service"])
 app.include_router(EmployeeRouter, prefix="/employee", tags=["employee"])

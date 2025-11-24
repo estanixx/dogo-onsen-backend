@@ -8,13 +8,18 @@ from datetime import datetime, date, time, timedelta, timezone
 from fastapi import Body
 
 from app.services import ReservationService
+from app.deps.device_cookie import get_device_config, DeviceConfig
 
 ReservationRouter = APIRouter()
 from app.models.utils import DateRequest
 
 
 @ReservationRouter.get("/", response_model=list[Reservation])
-async def list_reservations(accountId: str | None = None, session: AsyncSession = Depends(get_session)):
+async def list_reservations(
+    accountId: str | None = None,
+    session: AsyncSession = Depends(get_session),
+    device_config: DeviceConfig | None = Depends(get_device_config),
+):
     return await ReservationService.list_reservations(accountId, session)
 
 
