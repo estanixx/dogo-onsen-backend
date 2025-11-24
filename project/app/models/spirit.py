@@ -5,19 +5,19 @@ from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship
 from sqlalchemy import Column, DateTime, func, String
 
+from app.models.spirit_type import SpiritType
 if TYPE_CHECKING:
-    from app.models.spirit_type import SpiritType
     from app.models.venue_account import VenueAccount
 
 
 class SpiritBase(SQLModel):
     name: str = Field(nullable=False)
     typeId: str = Field(nullable=False, foreign_key="spirit_type.id") 
-    accountId: str = Field(nullable=False)
-    eiltBalance: float = Field(nullable=False) 
-    individualRecord: str = Field(nullable=False)
-    image: Optional[str] = Field(default=None, nullable=True)
-    active: Optional[bool] = Field(default=None, nullable=True) # Ok?
+    # accountId: str = Field(nullable=False)
+    # eiltBalance: float = Field(nullable=False) 
+    # individualRecord: str = Field(nullable=False)
+    image: Optional[str] = Field(default=None, nullable=False)
+    active: bool = Field(default=True, nullable=False)
 
 
 class Spirit(SpiritBase, table=True):
@@ -45,9 +45,9 @@ class SpiritCreate(SpiritBase):
 class SpiritUpdate(SQLModel):
     name: Optional[str] = None
     spiritType: Optional[str] = None
-    accountId: Optional[str] = None
-    eiltBalance: Optional[float] = None
-    individualRecord: Optional[str] = None
+    # accountId: Optional[str] = None
+    # eiltBalance: Optional[float] = None
+    # individualRecord: Optional[str] = None
     image: Optional[str] = None
     active: Optional[bool] = None
 

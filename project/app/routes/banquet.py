@@ -1,5 +1,7 @@
 from datetime import date, datetime, time, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Query
+
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from typing import List
@@ -18,6 +20,7 @@ from app.models import (
     AvailableBanquetTableRead,
 )
 from app.services import BanquetService
+from app.core.constants import TIME_SLOTS
 
 BanquetRouter = APIRouter()
 
@@ -116,3 +119,33 @@ async def get_seat(seat_id: int, session: AsyncSession = Depends(get_session)):
             status_code=status.HTTP_404_NOT_FOUND, detail="Seat not found"
         )
     return s
+
+
+@BanquetRouter.get("/{spirit_id}/available_time_slots", response_model=List[str])
+async def available_time_slots_for_spirit(
+    spirit_id: str,
+    date: str = Query(..., description="Date (YYYY-MM-DD) or ISO datetime"),
+    session: AsyncSession = Depends(get_session),
+):
+    s = date
+    # Accept either `date` or `datetime` in the payload
+    if not date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="missing datetime"
+        )
+
+    # parse date or iso datetime
+    try:
+        if len(s) <= 10 and "-" in s:
+            d = datetime.fromisoformat(s).date()
+        else:
+            d = datetime.fromisoformat(s).date()
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date format. Use YYYY-MM-DD or ISO datetime.",
+        )
+
+    # Delegate computation to service function that checks all slots for the date
+    slots = await BanquetService.get_available_time_slots(spirit_id, d, session)
+    return slots

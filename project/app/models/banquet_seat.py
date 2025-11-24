@@ -17,7 +17,7 @@ class BanquetSeat(BanquetSeatBase, table=True):
     __tablename__ = "banquet_seat"
     id: Optional[int] = Field(default=None, primary_key=True)
     # Foreign key to BanquetTable id (string UUID)
-    tableId: str = Field(foreign_key="banquet_table.id", nullable=False)
+    tableId: int = Field(foreign_key="banquet_table.id", nullable=False)
     table: "BanquetTable" = Relationship(back_populates="availableSeats")
     # One seat can have many reservations
     reservations: List["Reservation"] = Relationship(back_populates="seat")
@@ -30,12 +30,12 @@ class BanquetSeatCreate(BanquetSeatBase):
 class BanquetSeatUpdate(SQLModel):
     seatNumber: Optional[int] = None
     # TODO: rationsConsumed: Optional[int] = None
-    tableId: Optional[str] = None
+    tableId: Optional[int] = None
 
 
 class BanquetSeatRead(SQLModel):
     id: Optional[int]
-    tableId: str
+    tableId: int
     seatNumber: int
 
 

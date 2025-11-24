@@ -31,6 +31,13 @@ from app.models.item_intake import (
     ItemIntakeUpdate,
     ItemIntakeRead,
 )
+from app.models.private_venue import PrivateVenue, PrivateVenueCreate, PrivateVenueRead
+from app.models.type_relation import (
+    TypeRelation,
+    TypeRelationCreate,
+    TypeRelationRead,
+    TypeRelationUpdate,
+)
 
 __all__ = [
     "DateRequest",
@@ -72,4 +79,11 @@ __all__ = [
     "ItemIntakeCreate",
     "ItemIntakeUpdate",
     "ItemIntakeRead",
+    "PrivateVenue",
+    "PrivateVenueCreate",
+    "PrivateVenueRead",
+    "TypeRelation",
+    "TypeRelationCreate",
+    "TypeRelationRead",
+    "TypeRelationUpdate",
 ]

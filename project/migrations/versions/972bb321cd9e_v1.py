@@ -1,8 +1,8 @@
 """v1
 
-Revision ID: f94954fd8cd2
+Revision ID: 972bb321cd9e
 Revises: 
-Create Date: 2025-11-23 05:01:16.741262
+Create Date: 2025-11-24 22:38:27.683012
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel             # NEW
 
 
 # revision identifiers, used by Alembic.
-revision = 'f94954fd8cd2'
+revision = '972bb321cd9e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,7 +22,7 @@ def upgrade() -> None:
     op.create_table('banquet_table',
     sa.Column('capacity', sa.Integer(), nullable=False),
     sa.Column('state', sa.Boolean(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('employee',
@@ -35,6 +35,10 @@ def upgrade() -> None:
     op.create_table('item',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('private_venue',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -58,7 +62,7 @@ def upgrade() -> None:
     op.create_table('banquet_seat',
     sa.Column('seatNumber', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('tableId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('tableId', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['tableId'], ['banquet_table.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -67,13 +71,19 @@ def upgrade() -> None:
     sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('typeId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('accountId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('eiltBalance', sa.Float(), nullable=False),
-    sa.Column('individualRecord', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('active', sa.Boolean(), nullable=True),
+    sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('active', sa.Boolean(), nullable=False),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.ForeignKeyConstraint(['typeId'], ['spirit_type.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('type_relation',
+    sa.Column('relation', sa.String(), nullable=False),
+    sa.Column('source_type_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('target_type_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['source_type_id'], ['spirit_type.id'], ),
+    sa.ForeignKeyConstraint(['target_type_id'], ['spirit_type.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('item_intake',
@@ -88,9 +98,13 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('venue_account',
+    sa.Column('startTime', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('endTime', sa.DateTime(timezone=True), nullable=False),
     sa.Column('spiritId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('privateVenueId', sa.Integer(), nullable=False),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('pin', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['privateVenueId'], ['private_venue.id'], ),
     sa.ForeignKeyConstraint(['spiritId'], ['spirit.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -119,10 +133,12 @@ def downgrade() -> None:
     op.drop_table('reservation')
     op.drop_table('venue_account')
     op.drop_table('item_intake')
+    op.drop_table('type_relation')
     op.drop_table('spirit')
     op.drop_table('banquet_seat')
     op.drop_table('spirit_type')
     op.drop_table('service')
+    op.drop_table('private_venue')
     op.drop_table('item')
     op.drop_index(op.f('ix_employee_clerkId'), table_name='employee')
     op.drop_table('employee')

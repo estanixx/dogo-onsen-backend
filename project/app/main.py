@@ -1,3 +1,6 @@
+import logging
+logging.basicConfig(level=logging.INFO)
+
 import os
 
 from fastapi import FastAPI
@@ -15,13 +18,14 @@ from app.routes import (
     VenueAccountRouter,
     ItemRouter,
     ItemIntakeRouter,
+    PrivateVenueRouter,
     UtilsRouter,
 )
+
 
 app = FastAPI()
 
 # Configure CORS origins via env var `CORS_ORIGINS` (comma-separated).
-# If not provided, allow common localhost dev origins.
 origins_env = os.getenv("CORS_ORIGINS")
 
 if origins_env:
@@ -53,3 +57,4 @@ app.include_router(FileRouter, prefix="/files", tags=["files"])
 app.include_router(VenueAccountRouter, prefix="/venue_account", tags=["venue_account"])
 app.include_router(ItemRouter, prefix="/item", tags=["item"])
 app.include_router(ItemIntakeRouter, prefix="/item_intake", tags=["item_intake"])
+app.include_router(PrivateVenueRouter, prefix="/private_venue", tags=["private_venue"])

@@ -16,7 +16,7 @@ class BanquetTableBase(SQLModel):
 class BanquetTable(BanquetTableBase, table=True):
     """Represents a banquet table and its seats."""
     __tablename__ = "banquet_table"
-    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     availableSeats: List["BanquetSeat"] = Relationship(back_populates="table", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
     
     
@@ -31,7 +31,7 @@ class BanquetTableUpdate(SQLModel):
 
 
 class BanquetTableRead(SQLModel):
-    id: Optional[str]
+    id: int
     capacity: int = 6
     state: bool = True
     availableSeats: Optional[List[BanquetSeatRead]] = None

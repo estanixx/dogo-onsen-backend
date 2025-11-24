@@ -8,6 +8,7 @@ from app.routes.files import FileRouter
 from app.routes.venue_account import VenueAccountRouter
 from app.routes.item import ItemRouter
 from app.routes.item_intake import ItemIntakeRouter
+from app.routes.private_venue import PrivateVenueRouter
 from app.routes.utils import UtilsRouter
 
 __all__ = [
@@ -21,7 +22,6 @@ __all__ = [
     "VenueAccountRouter",
     "ItemRouter",
     "ItemIntakeRouter",
-
-    "UtilsRouter",  
+    "PrivateVenueRouter",
+    "UtilsRouter",
 ]
-
