@@ -10,6 +10,9 @@ class EmployeeBase(SQLModel):
         default_factory=list,
         sa_column=Column('tareas_asignadas', JSON, nullable=False, server_default='[]'),
     )
+    firstName: Optional[str] = Field(default=None, nullable=True)
+    lastName: Optional[str] = Field(default=None, nullable=True)
+    email: Optional[str] = Field(default=None, nullable=True)
 
 
 class Employee(EmployeeBase, table=True):
@@ -25,3 +28,6 @@ class EmployeeCreate(EmployeeBase):
 class EmployeeUpdate(SQLModel):
     estado: Optional[str] = None
     tareasAsignadas: Optional[List[str]] = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    email: Optional[str] = None

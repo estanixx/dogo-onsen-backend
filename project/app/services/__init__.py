@@ -8,6 +8,7 @@ from app.services.spirit_type import SpiritTypeService
 from app.services.venue_account import VenueAccountService
 from app.services.item import ItemService
 from app.services.item_intake import ItemIntakeService
+from app.services.clerk_api import ClerkAPIService
 
 __all__ = [
     "BanquetService",
@@ -20,4 +21,5 @@ __all__ = [
     "VenueAccountService",
     "ItemService",
     "ItemIntakeService",
+    "ClerkAPIService",
 ]
