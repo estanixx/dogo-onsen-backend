@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
+from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, Form
 from sqlmodel import SQLModel
 from app.services import FileService
 from typing import List, Dict
@@ -12,22 +12,22 @@ class ImageUploadResponse(SQLModel):
     faces: List[Dict[str, int]]  # Lista de diccionarios con x, y, w, h
 
 
-@FileRouter.post("/upload-image-with-faces", response_model=ImageUploadResponse)
-async def upload_image_with_faces_endpoint(file: UploadFile = File(...)):
+@FileRouter.post("/upload-image-with-faces") #, response_model=ImageUploadResponse
+async def upload_image_with_faces_endpoint(user_file: UploadFile = File(...), template_filename: str = Form(...)):
     """
     Endpoint para subir una imagen, detecta rostros y devuelve la URL de S3
     y las coordenadas de los rostros detectados.
     """
 
     allowed_types = ["image/jpeg", "image/png", "image/webp"]
-    if file.content_type not in allowed_types:
+    if user_file.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,
             detail="Tipo de archivo no permitido. Solo se aceptan JPEG, PNG, WebP.",
         )
 
     # Use the service to upload and detect faces
-    result = FileService.upload_file_to_s3_with_face_detection(file)
+    result = FileService.create_composite_image(user_file, template_filename)
     return result
 
 
