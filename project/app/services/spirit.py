@@ -17,12 +17,17 @@ class SpiritService:
         s = Spirit(**spirit_in.dict())
         session.add(s)
         await session.commit()
+        await session.refresh(s.type)
         await session.refresh(s)
         return s
 
     @staticmethod
     async def get_spirit(spirit_id: str, session: AsyncSession) -> Optional[Spirit]:
-        res = await session.exec(select(Spirit).where(Spirit.id == spirit_id))
+        res = await session.exec(
+            select(Spirit)
+            .where(Spirit.id == spirit_id)
+            .options(selectinload(Spirit.type))
+        )
         return res.first()
 
     @staticmethod

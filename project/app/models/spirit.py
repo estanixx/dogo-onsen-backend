@@ -21,9 +21,9 @@ class SpiritBase(SQLModel):
 
 
 class Spirit(SpiritBase, table=True):
+    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     __tablename__ = 'spirit'
 
-    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     createdAt: datetime = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False),
     )
@@ -39,7 +39,7 @@ class Spirit(SpiritBase, table=True):
 
 
 class SpiritCreate(SpiritBase):
-    pass
+    id: Optional[str] = None
 
 
 class SpiritUpdate(SQLModel):

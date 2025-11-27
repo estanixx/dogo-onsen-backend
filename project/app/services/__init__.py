@@ -10,6 +10,8 @@ from app.services.item import ItemService
 from app.services.item_intake import ItemIntakeService
 from app.services.private_venue import PrivateVenueService
 from app.services.clerk_api import ClerkAPIService
+from app.services.deposit import DepositService
+from app.services.inventory_item import InventoryItemService
 
 __all__ = [
     "BanquetService",
@@ -24,4 +26,6 @@ __all__ = [
     "ItemIntakeService",
     "PrivateVenueService",
     "ClerkAPIService",
+    "DepositService",
+    "InventoryItemService",
 ]

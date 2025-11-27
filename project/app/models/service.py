@@ -11,6 +11,7 @@ class ServiceBase(SQLModel):
     name: str
     eiltRate: float
     image: Optional[str] = None
+    rating: float = 0.0
 
 
 class Service(ServiceBase, table=True):

@@ -83,7 +83,7 @@ class FileService:
     def _download_image_from_s3(key: str) -> np.ndarray:
         """Helper para descargar imagen de S3 y convertirla a OpenCV format"""
         try:
-            response = s3_client.get_object(Bucket=AWS_S3_BUCKET_NAME, Key=key)
+            response = s3_client.get_object(Bucket=AWS_S3_BUCKET_NAME, Key=key, )
             image_bytes = response['Body'].read()
             nparr = np.frombuffer(image_bytes, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -116,15 +116,16 @@ class FileService:
         if not template_filename.endswith(('.png', '.jpg', '.jpeg')):
              # Aseguramos extensión si viene sin ella
              template_filename += ".png"
-             
-        template_key = f"spirit_types/{template_filename}"
+        
+        template_end = template_filename.split('/')[-1]
+        template_key = f"spirit_types/{template_end}"
         print(f"DEBUG: Intentando descargar {template_key}") # <--- LOG ÚTIL
         
         try:
             template_img = FileService._download_image_from_s3(template_key)
         except Exception as e:
             print(f"ERROR S3: {str(e)}")
-            raise HTTPException(status_code=404, detail=f"No se encontró el template '{template_filename}'")
+            raise HTTPException(status_code=404, detail=f"No se encontró el template '{template_end}'")
 
         # 4. Procesamiento de Color (HSV)
         hsv_template = cv2.cvtColor(template_img, cv2.COLOR_BGR2HSV)
