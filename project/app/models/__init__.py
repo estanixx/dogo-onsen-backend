@@ -24,6 +24,7 @@ from app.models.venue_account import (
     VenueAccount,
     VenueAccountCreate,
     VenueAccountUpdate,
+    VenueAccountRead
 )
 from app.models.utils import DateRequest, DateTimeRequest
 from app.models.item import Item, ItemCreate, ItemUpdate, ItemRead
@@ -71,6 +72,7 @@ __all__ = [
     "VenueAccount",
     "VenueAccountCreate",
     "VenueAccountUpdate",
+    "VenueAccountRead",
     "AvailableBanquetSeatRead",
     "AvailableBanquetTableRead",
     "Item",

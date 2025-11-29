@@ -3,7 +3,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
-from app.models import VenueAccount, VenueAccountCreate, VenueAccountUpdate
+from app.models import VenueAccount, VenueAccountCreate, VenueAccountUpdate, VenueAccountRead
 from app.services import VenueAccountService
 from fastapi import Depends
 from app.deps.device_cookie import get_device_config, DeviceConfig
@@ -25,7 +25,7 @@ async def create_account(
     return await VenueAccountService.create_account(account_in, session)
 
 
-@VenueAccountRouter.get("/{account_id}", response_model=VenueAccount)
+@VenueAccountRouter.get("/{account_id}", response_model=VenueAccountRead)
 async def get_account(
     account_id: str,
     session: AsyncSession = Depends(get_session),

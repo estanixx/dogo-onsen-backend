@@ -21,7 +21,7 @@ from app.routes import (
     PrivateVenueRouter,
     UtilsRouter,
     DepositRouter,
-    InventoryItemRouter,
+    # InventoryItemRouter,
 )
 
 
@@ -50,7 +50,7 @@ app.add_middleware(
 app.add_middleware(DeviceCookieMiddleware)
 app.include_router(UtilsRouter, tags=["utils"])
 app.include_router(DepositRouter, prefix="/deposit", tags=["deposit"])
-app.include_router(InventoryItemRouter, prefix="/inventoy_item", tags=["inventory_item"])
+# app.include_router(InventoryItemRouter, prefix="/inventoy_item", tags=["inventory_item"])
 app.include_router(ServiceRouter, prefix="/service", tags=["service"])
 app.include_router(EmployeeRouter, prefix="/employee", tags=["employee"])
 app.include_router(BanquetRouter, prefix="/banquet", tags=["banquet"])

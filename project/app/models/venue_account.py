@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlmodel import Field, SQLModel, Relationship
 from sqlalchemy import Column, DateTime, func, String
-from app.models.spirit import Spirit
+from app.models.spirit import Spirit, SpiritRead
 
 if TYPE_CHECKING:
     from app.models.reservation import Reservation
@@ -35,6 +35,14 @@ class VenueAccount(VenueAccountBase, table=True):
     privateVenue: "PrivateVenue" = Relationship(back_populates="venueAccounts")
     pin: str = Field(nullable=False)
 
+class VenueAccountRead(VenueAccountBase):
+    id: Optional[str]
+    spiritId: str
+    privateVenueId: int
+    startTime: datetime
+    endTime: datetime
+    pin: str
+    spirit: "SpiritRead"
 
 class VenueAccountCreate(VenueAccountBase):
     pass

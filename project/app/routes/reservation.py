@@ -5,7 +5,7 @@ import logging
 from app.db import get_session
 from app.models import Reservation, ReservationCreate, ReservationUpdate
 from datetime import datetime, date, time, timedelta, timezone
-from fastapi import Body
+from fastapi import Body, Query
 
 from app.services import ReservationService
 from app.deps.device_cookie import get_device_config, DeviceConfig
@@ -16,11 +16,14 @@ from app.models.utils import DateRequest
 
 @ReservationRouter.get("/", response_model=list[Reservation])
 async def list_reservations(
-    accountId: str | None = None,
+    accountId: str | None = Query(None, description="Account ID"),
+    serviceId: str | None = Query(None, description="Service ID"),
+    datetime: str | None = Query(None, description="Date (YYYY-MM-DD)"),
     session: AsyncSession = Depends(get_session),
     device_config: DeviceConfig | None = Depends(get_device_config),
 ):
-    return await ReservationService.list_reservations(accountId, session)
+    filters = {"accountId": accountId, "serviceId": serviceId, "datetime": datetime}
+    return await ReservationService.list_reservations(filters, session)
 
 
 @ReservationRouter.post(

@@ -1,11 +1,13 @@
 from typing import List, Optional
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models.venue_account import (
+from app.models import (
     VenueAccount,
     VenueAccountCreate,
     VenueAccountUpdate,
+    Spirit
 )
 
 
@@ -30,7 +32,7 @@ class VenueAccountService:
         account_id: str, session: AsyncSession
     ) -> Optional[VenueAccount]:
         res = await session.exec(
-            select(VenueAccount).where(VenueAccount.id == account_id)
+            select(VenueAccount).where(VenueAccount.id == account_id).options(selectinload(VenueAccount.spirit).selectinload(Spirit.type))
         )
         return res.first()
 
