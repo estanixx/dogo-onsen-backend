@@ -36,6 +36,19 @@ services:
     depends_on:
       - db
 
+  tests:
+    build: ./project
+    command: ["/bin/sh", "-c", "sh /usr/src/app/tests/entrypoint.sh"]
+    volumes:
+      - ./project:/usr/src/app
+      - ./project/tests:/usr/src/app/tests
+    env_file:
+      - ./.env
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - db
+
 volumes:
   pgadmin-data:
     driver: local
