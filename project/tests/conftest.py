@@ -1,11 +1,15 @@
+import os
+import os
 import sys
 import pathlib
 import warnings
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+# Set default DATABASE_URL for tests if not present
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
-# Ensure project root is on sys.path so `import app` works when running pytest from `project/`
+# Ensure project root is on sys.path so  works when running pytest from 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

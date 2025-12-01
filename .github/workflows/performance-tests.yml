@@ -1,0 +1,47 @@
+name: Backend Performance Tests
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tests/performance/**'
+      - '.github/workflows/performance-tests.yml'
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r project/requirements.txt
+          pip install uvicorn
+
+      - name: Start Backend Server
+        run: |
+          cd project
+          # Run uvicorn in background
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          # Wait for server to be ready
+          echo "Waiting for server to start..."
+          sleep 10
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 test
+        uses: grafana/run-k6-action@v1
+        env:
+          K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+          K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
+          BASE_URL: http://localhost:8000
+        with:
+          path: tests/performance/load_test.js
+          cloud-run-locally: true

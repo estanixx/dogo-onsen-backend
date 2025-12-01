@@ -15,10 +15,14 @@ bookService(
   date: Date,
   time: string,
 )
-
+[ ] Implement unitary and performance tests
+[ ] Support deployment
 
 ## samuelColorado
 [ ] Add venueaccount relationship to reservation
+[ ] Implement unitary and performance tests
+[ ] Support deployment
 
 ## juanpa
-[x] 👍👍👍😎🥶🥶
+[ ] Implement unitary and performance tests
+[ ] Support deployment
