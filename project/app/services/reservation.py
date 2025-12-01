@@ -89,7 +89,7 @@ class ReservationService:
     async def create_reservation(
         reservation_in: ReservationCreate, session: AsyncSession
     ) -> Reservation:
-        r = Reservation(**reservation_in.dict())
+        r = Reservation(**reservation_in.model_dump())
         session.add(r)
         await session.commit()
         await session.refresh(r)
@@ -148,7 +148,7 @@ class ReservationService:
         r = res.first()
         if not r:
             return None
-        data = reservation_in.dict(exclude_unset=True)
+        data = reservation_in.model_dump(exclude_unset=True)
         for key, value in data.items():
             setattr(r, key, value)
         session.add(r)

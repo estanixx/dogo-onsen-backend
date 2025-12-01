@@ -99,3 +99,18 @@ CI (GitHub Actions)
 
 - A workflow was added to run these tests on push and pull requests: `.github/workflows/backend-tests.yml` (runs Python 3.11 and executes `pytest`).
 
+Performance tests
+
+Performance tests use [k6](https://k6.io/) to validate backend API endpoints directly.
+
+- **Location**: `tests/performance/load_test.js`
+- **Run locally**:
+  ```bash
+  # Ensure backend is running on http://localhost:8004
+  k6 run tests/performance/load_test.js
+  ```
+- **Scenarios**:
+  - Read load: Ramping VUs reading employee list.
+  - Write load: Constant VUs creating new employees.
+  
+- **CI**: Runs via `.github/workflows/performance-tests.yml`.

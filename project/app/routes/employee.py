@@ -172,11 +172,15 @@ async def admin_list_employees(
         for emp in employees:
             # Try to get admin status from Clerk
             is_admin = False
+            role = "reception"
             try:
                 user_data = await ClerkAPIService.get_user(emp.clerkId)
                 if user_data:
                     public_meta = user_data.get("public_metadata") or {}
-                    is_admin = public_meta.get("role") == "admin"
+                    role_meta = public_meta.get("role")
+                    if role_meta:
+                        role = role_meta
+                    is_admin = role == "admin"
             except Exception as e:
                 # Log but don't fail if we can't check Clerk
                 print(f"Warning: Could not check admin status for {emp.clerkId}: {str(e)}")
@@ -187,7 +191,7 @@ async def admin_list_employees(
                     first_name=emp.firstName or "",
                     last_name=emp.lastName or "",
                     email=emp.email or "",
-                    role="reception",  # Default role, stored in Clerk publicMetadata
+                    role=role,
                     estado=emp.estado,
                     is_admin=is_admin
                 )
