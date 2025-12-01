@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-import logging
 from app.db import get_session
-from app.models import Reservation, ReservationCreate, ReservationUpdate
-from datetime import datetime, date, time, timedelta, timezone
+from app.models import Reservation, ReservationCreate, ReservationUpdate, ReservationRead
 from fastapi import Body, Query
 
 from app.services import ReservationService
@@ -14,7 +12,7 @@ ReservationRouter = APIRouter()
 from app.models.utils import DateRequest
 
 
-@ReservationRouter.get("/", response_model=list[Reservation])
+@ReservationRouter.get("/", response_model=list[ReservationRead])
 async def list_reservations(
     accountId: str | None = Query(None, description="Account ID"),
     serviceId: str | None = Query(None, description="Service ID"),
@@ -36,7 +34,7 @@ async def create_reservation(
     return response
 
 
-@ReservationRouter.post("/banquet-by-date", response_model=list[Reservation])
+@ReservationRouter.post("/banquet-by-date", response_model=list[ReservationRead])
 async def get_banquet_reservations_for_date(
     payload: DateRequest = Body(...), session: AsyncSession = Depends(get_session)
 ):
@@ -57,7 +55,7 @@ async def get_banquet_reservations_for_date(
         )
 
 
-@ReservationRouter.get("/{reservation_id}", response_model=Reservation)
+@ReservationRouter.get("/{reservation_id}", response_model=ReservationRead)
 async def get_reservation(
     reservation_id: str, session: AsyncSession = Depends(get_session)
 ):

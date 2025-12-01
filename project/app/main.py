@@ -21,7 +21,6 @@ from app.routes import (
     PrivateVenueRouter,
     UtilsRouter,
     DepositRouter,
-    # InventoryItemRouter,
 )
 
 
@@ -37,6 +36,7 @@ else:
         "http://localhost:3000",
         "http://localhost:8000",
         "http://localhost:8004",
+        "http://127.0.0.1:3000",
     ]
 
 app.add_middleware(
@@ -50,7 +50,6 @@ app.add_middleware(
 app.add_middleware(DeviceCookieMiddleware)
 app.include_router(UtilsRouter, tags=["utils"])
 app.include_router(DepositRouter, prefix="/deposit", tags=["deposit"])
-# app.include_router(InventoryItemRouter, prefix="/inventoy_item", tags=["inventory_item"])
 app.include_router(ServiceRouter, prefix="/service", tags=["service"])
 app.include_router(EmployeeRouter, prefix="/employee", tags=["employee"])
 app.include_router(BanquetRouter, prefix="/banquet", tags=["banquet"])

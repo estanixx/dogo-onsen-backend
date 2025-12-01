@@ -14,7 +14,7 @@ class SpiritBase(SQLModel):
     name: str = Field(nullable=False)
     typeId: str = Field(nullable=False, foreign_key="spirit_type.id") 
     # accountId: str = Field(nullable=False)
-    # eiltBalance: float = Field(nullable=False) 
+
     # individualRecord: str = Field(nullable=False)
     image: Optional[str] = Field(default=None, nullable=False)
     active: bool = Field(default=True, nullable=False)
@@ -46,7 +46,6 @@ class SpiritUpdate(SQLModel):
     name: Optional[str] = None
     spiritType: Optional[str] = None
     # accountId: Optional[str] = None
-    # eiltBalance: Optional[float] = None
     # individualRecord: Optional[str] = None
     image: Optional[str] = None
     active: Optional[bool] = None

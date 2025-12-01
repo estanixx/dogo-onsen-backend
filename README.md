@@ -18,7 +18,7 @@ Sanity check: [http://localhost:8004/ping](http://localhost:8004/ping)
 ## Manual commands
 
 - Create migration inside running container:
-  `docker compose exec web alembic revision --autogenerate -m "describe change"`
+  `docker compose exec web alembic revision --autogenerate -m "v1"`
 - Apply migrations inside running container:
   `docker compose exec web alembic upgrade head`
 - Undo last migration:

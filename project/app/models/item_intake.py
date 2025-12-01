@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, TYPE_CHECKING
-from pydantic import root_validator
+from pydantic import model_validator
 
 if TYPE_CHECKING:
     from app.models.banquet_seat import BanquetSeat
@@ -14,7 +14,7 @@ class ItemIntakeBase(SQLModel):
     seatId: Optional[int] = None
     serviceId: Optional[str] = None
 
-    @root_validator
+    @model_validator(mode='before')
     def seat_xor_service(cls, values):
         seat = values.get("seatId")
         service = values.get("serviceId")

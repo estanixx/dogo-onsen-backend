@@ -14,9 +14,15 @@ async def list_deposits(session: AsyncSession = Depends(get_session)):
     return await DepositService.list_deposits(session)
 
 
-@DepositRouter.post(
-    "/", response_model=Deposit, status_code=status.HTTP_201_CREATED
-)
+@DepositRouter.get("/account/{account_id}", response_model=list[Deposit])
+async def list_deposits_for_account(
+    account_id: str, session: AsyncSession = Depends(get_session)
+):
+    """Return deposits filtered by venue account id"""
+    return await DepositService.list_deposits_for_account(account_id, session)
+
+
+@DepositRouter.post("/", response_model=Deposit, status_code=status.HTTP_201_CREATED)
 async def create_deposit(
     deposit: DepositCreate, session: AsyncSession = Depends(get_session)
 ):
@@ -24,9 +30,7 @@ async def create_deposit(
 
 
 @DepositRouter.get("/{deposit_id}", response_model=Deposit)
-async def get_deposit(
-    deposit_id: str, session: AsyncSession = Depends(get_session)
-):
+async def get_deposit(deposit_id: str, session: AsyncSession = Depends(get_session)):
     d = await DepositService.get_deposit(deposit_id, session)
     if not d:
         raise HTTPException(
@@ -41,9 +45,7 @@ async def update_deposit(
     deposit: DepositUpdate,
     session: AsyncSession = Depends(get_session),
 ):
-    d = await DepositService.update_deposit(
-        deposit_id, deposit, session
-    )
+    d = await DepositService.update_deposit(deposit_id, deposit, session)
     if not d:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Deposit not found"
@@ -52,9 +54,7 @@ async def update_deposit(
 
 
 @DepositRouter.delete("/{deposit_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_deposit(
-    deposit_id: str, session: AsyncSession = Depends(get_session)
-):
+async def delete_deposit(deposit_id: str, session: AsyncSession = Depends(get_session)):
     ok = await DepositService.delete_deposit(deposit_id, session)
     if not ok:
         raise HTTPException(

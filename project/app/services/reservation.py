@@ -2,10 +2,11 @@ from typing import List, Optional
 from datetime import datetime, date, time, timedelta, timezone
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models import Reservation, ReservationCreate, ReservationUpdate
 from app.models import DateRequest
-
+from app.core.tools import logger
 
 class ReservationService:
     @staticmethod
@@ -35,6 +36,7 @@ class ReservationService:
                 # - If it's a date, return reservations whose startTime falls within that UTC date.
                 # - If it's a full datetime, return reservations whose startTime equals that datetime.
                 val = filters["datetime"]
+                logger.debug(f"Filtering reservations by datetime: {val}\n\n\n\n\n\n\n\n\n")
                 try:
                     if isinstance(val, str):
                         if len(val) <= 10 and "-" in val:
@@ -52,7 +54,10 @@ class ReservationService:
                             dt = datetime.fromisoformat(val)
                             if dt.tzinfo is None:
                                 dt = dt.replace(tzinfo=timezone.utc)
-                            q = q.where(Reservation.startTime == dt)
+                            end_dt = dt + timedelta(hours=1)
+                            q = q.where(Reservation.startTime >= dt).where(
+                                Reservation.startTime < end_dt
+                            )
                     elif isinstance(val, datetime):
                         dt = val
                         if dt.tzinfo is None:
@@ -72,7 +77,11 @@ class ReservationService:
                         pass
                 except Exception:
                     raise ValueError("Invalid datetime filter format")
-
+        q = q.options(
+            selectinload(Reservation.account),
+            selectinload(Reservation.service),
+            selectinload(Reservation.seat),
+        )
         res = await session.exec(q)
         return res.all()
 
@@ -107,6 +116,11 @@ class ReservationService:
             .where(Reservation.seatId != None)
             .where(Reservation.startTime >= start_dt)
             .where(Reservation.startTime < end_dt)
+            .options(
+                selectinload(Reservation.account),
+                selectinload(Reservation.service),
+                selectinload(Reservation.seat),
+            )
         )
         res = await session.exec(q)
         return res.all()
@@ -116,7 +130,11 @@ class ReservationService:
         reservation_id: str, session: AsyncSession
     ) -> Optional[Reservation]:
         res = await session.exec(
-            select(Reservation).where(Reservation.id == reservation_id)
+            select(Reservation).where(Reservation.id == reservation_id).options(
+            selectinload(Reservation.account),
+            selectinload(Reservation.service),
+            selectinload(Reservation.seat),
+        )
         )
         return res.first()
 

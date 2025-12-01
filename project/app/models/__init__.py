@@ -1,6 +1,6 @@
 from app.models.service import Service, ServiceCreate, ServiceUpdate
 from app.models.employee import Employee, EmployeeCreate, EmployeeUpdate
-from app.models.reservation import Reservation, ReservationCreate, ReservationUpdate
+from app.models.reservation import Reservation, ReservationCreate, ReservationUpdate, ReservationRead
 from app.models.banquet_seat import (
     BanquetSeat,
     BanquetSeatCreate,
@@ -19,7 +19,6 @@ from app.models.banquet_table import (
 from app.models.spirit import Spirit, SpiritCreate, SpiritUpdate, SpiritRead
 from app.models.spirit_type import SpiritType, SpiritTypeCreate, SpiritTypeUpdate
 from app.models.deposit import Deposit, DepositCreate, DepositUpdate
-from app.models.inventory_item import InventoryItem, InventoryItemCreate, InventoryItemUpdate
 from app.models.venue_account import (
     VenueAccount,
     VenueAccountCreate,
@@ -54,6 +53,7 @@ __all__ = [
     "Reservation",
     "ReservationCreate",
     "ReservationUpdate",
+    "ReservationRead",
     "BanquetSeat",
     "BanquetSeatCreate",
     "BanquetSeatUpdate",
@@ -90,7 +90,7 @@ __all__ = [
     "TypeRelationCreate",
     "TypeRelationRead",
     "TypeRelationUpdate",
-    "DepositType",
+    "Deposit",
     "DepositCreate",
     "DepositUpdate",
 ]

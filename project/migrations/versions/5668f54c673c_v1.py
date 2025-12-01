@@ -1,8 +1,8 @@
 """v1
 
-Revision ID: 972bb321cd9e
+Revision ID: 5668f54c673c
 Revises: 
-Create Date: 2025-11-24 22:38:27.683012
+Create Date: 2025-11-30 18:41:25.946534
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel             # NEW
 
 
 # revision identifiers, used by Alembic.
-revision = '972bb321cd9e'
+revision = '5668f54c673c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -25,6 +25,13 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('deposit',
+    sa.Column('date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('accountId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('amount', sa.Integer(), nullable=False),
+    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('employee',
     sa.Column('tareas_asignadas', sa.JSON(), server_default='[]', nullable=False),
     sa.Column('estado', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -35,6 +42,13 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('clerkId')
     )
     op.create_index(op.f('ix_employee_clerkId'), 'employee', ['clerkId'], unique=False)
+    op.create_table('inventory_item',
+    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.Column('unit', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('item',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
@@ -51,6 +65,7 @@ def upgrade() -> None:
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('eiltRate', sa.Float(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -143,7 +158,9 @@ def downgrade() -> None:
     op.drop_table('service')
     op.drop_table('private_venue')
     op.drop_table('item')
+    op.drop_table('inventory_item')
     op.drop_index(op.f('ix_employee_clerkId'), table_name='employee')
     op.drop_table('employee')
+    op.drop_table('deposit')
     op.drop_table('banquet_table')
     # ### end Alembic commands ###

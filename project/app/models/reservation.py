@@ -1,29 +1,28 @@
 
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, TYPE_CHECKING
-from pydantic import root_validator
+from pydantic import model_validator
 import uuid
-from app.models.service import Service
-from app.models.banquet_seat import BanquetSeat
 from datetime import datetime
 from sqlalchemy import Column, JSON, DateTime, func
 
-if TYPE_CHECKING:
-    from app.models.venue_account import VenueAccount
+from app.models.service import Service
+from app.models.banquet_seat import BanquetSeat
+from app.models.venue_account import VenueAccount
 
 class ReservationBase(SQLModel):
     accountId: str = Field(foreign_key="venue_account.id") 
     startTime: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     endTime: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False)) # TODO: validate endTime > startTime
     seatId: Optional[int] = Field(default=None, foreign_key="banquet_seat.id")
-    serviceId: Optional[str] = Field(default=None, foreign_key="service.id") # TODO: Arc to seat and service
+    serviceId: Optional[str] = Field(default=None, foreign_key="service.id") 
     
     isRedeemed: bool = False
     isRated: bool = False
     rating: Optional[float] = None
     # Storing account details as JSON for now (VenueAccount not modelled here)
 
-    @root_validator
+    @model_validator(mode='before')
     def validate_times(cls, values):
         start = values.get("startTime")
         end = values.get("endTime")
@@ -67,3 +66,20 @@ class ReservationUpdate(SQLModel):
     isRated: Optional[bool] = None
     rating: Optional[float] = None
     # TODO: account: Optional[dict] = None
+
+
+class ReservationRead(SQLModel):
+    id: Optional[str]
+    accountId: str
+    startTime: datetime
+    endTime: datetime
+    seatId: Optional[int]
+    serviceId: Optional[str]
+    isRedeemed: bool
+    isRated: bool
+    rating: Optional[float]
+    createdAt: datetime
+    updatedAt: datetime
+    service: Optional["Service"]
+    seat: Optional["BanquetSeat"]
+    account: Optional["VenueAccount"]

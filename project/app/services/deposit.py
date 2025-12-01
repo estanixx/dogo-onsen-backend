@@ -12,6 +12,15 @@ class DepositService:
         return res.all()
 
     @staticmethod
+    async def list_deposits_for_account(
+        account_id: str, session: AsyncSession
+    ) -> List[Deposit]:
+        """Return all deposits that belong to a specific account id."""
+        q = select(Deposit).where(Deposit.accountId == account_id)
+        res = await session.exec(q)
+        return res.all()
+
+    @staticmethod
     async def create_deposit(
         deposit_in: DepositCreate, session: AsyncSession
     ) -> Deposit:
@@ -22,21 +31,15 @@ class DepositService:
         return st
 
     @staticmethod
-    async def get_deposit(
-        deposit_id: str, session: AsyncSession
-    ) -> Optional[Deposit]:
-        res = await session.exec(
-            select(Deposit).where(Deposit.id == deposit_id)
-        )
+    async def get_deposit(deposit_id: str, session: AsyncSession) -> Optional[Deposit]:
+        res = await session.exec(select(Deposit).where(Deposit.id == deposit_id))
         return res.first()
 
     @staticmethod
     async def update_deposit(
         deposit_id: str, deposit_in: DepositUpdate, session: AsyncSession
     ) -> Optional[Deposit]:
-        res = await session.exec(
-            select(Deposit).where(Deposit.id == deposit_id)
-        )
+        res = await session.exec(select(Deposit).where(Deposit.id == deposit_id))
         st = res.first()
         if not st:
             return None
@@ -50,9 +53,7 @@ class DepositService:
 
     @staticmethod
     async def delete_deposit(deposit_id: str, session: AsyncSession) -> bool:
-        res = await session.exec(
-            select(Deposit).where(Deposit.id == deposit_id)
-        )
+        res = await session.exec(select(Deposit).where(Deposit.id == deposit_id))
         st = res.first()
         if not st:
             return False

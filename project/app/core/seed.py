@@ -6,7 +6,8 @@ from app.models import (
     VenueAccount,
     Spirit,
 )
-from app.services.banquet import BanquetService
+from app.services import BanquetService
+from app.models import Service
 from sqlmodel.ext.asyncio.session import AsyncSession
 from datetime import datetime, timedelta
 
@@ -75,7 +76,7 @@ startTime = datetime.now()
 endTime = datetime.now() + timedelta(days=60)
 password = "1234"
 spirit_data = [
-    # name, image
+    # id, name, image
     (
         "1",
         "Samuel Colorado",
@@ -100,6 +101,40 @@ spirit_data = [
         "5",
         "Kelsier",
         "https://uploads.coppermind.net/thumb/Kelsier_by_Deandra_Scicluna.jpg/250px-Kelsier_by_Deandra_Scicluna.jpg",
+    ),
+]
+
+service_data = [
+    # name, eiltRate, image, description
+    (
+        "Exorcism Ritual",
+        150,
+        "https://i0.wp.com/www.americamagazine.org/wp-content/uploads/2020/10/20200813T0915-VATICAN-LETTER-EXORCISM-EXPLAINED-1003611.JPG-884415.JPG?fit=2300%2C1647&ssl=1",
+        "A powerful ritual to banish malevolent spirits.",
+    ),
+    (
+        "Spirit Cleansing",
+        100,
+        "https://images-static.naikaa.com/beauty-blog/wp-content/uploads/2024/10/double-cleansing-banner.jpg",
+        "Cleansing services to purify haunted locations.",
+    ),
+    (
+        "Protective Charm",
+        75,
+        "https://i.etsystatic.com/9773885/r/il/319eb3/1178376308/il_570xN.1178376308_3cjs.jpg",  
+        "Protective charms to ward off evil spirits.",
+    ),
+    (
+        "Poker",
+        50,
+        "https://store-images.s-microsoft.com/image/apps.51959.14272217582130616.02bf9982-d980-42d9-93e6-372b4b7e36d8.31c1e585-05c9-4f32-b695-4b900c913466",
+        "A classic card game for entertainment.",
+    ),
+    (
+        "Banquete",
+        60,
+        "https://media.istockphoto.com/id/465210583/photo/banquet-wedding.jpg?s=612x612&w=0&k=20&c=gulM34pOvyjY8UvVaaPLjX83ZjxY6Plv7RInbmgWtsY=",
+        "A grand banquet event for all guests.",
     ),
 ]
 
@@ -130,14 +165,27 @@ async def seed_venue_accounts(session: AsyncSession):
         session.add(account)
     await session.commit()
 
+async def seed_services(session: AsyncSession):
+    for name, eiltRate, image, description in service_data:
+        service = Service(
+            name=name,
+            eiltRate=eiltRate,
+            image=image,
+            description=description,
+        )
+        session.add(service)
+    await session.commit()
 
 async def run_seeds(session: AsyncSession):
     try:
         await seed_spirit_types(session)
         await seed_spirit_type_relations(session)
         await seed_spirits(session)
+        await seed_services(session)
         await seed_private_venue(10, session)
         await seed_venue_accounts(session)
         await seed_banquet(10, session)
+        return "ok"
     except Exception as e:
         print(f"Error seeding spirit types or relations: {e}")
+        return "error"

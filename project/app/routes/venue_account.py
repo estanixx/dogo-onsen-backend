@@ -11,7 +11,7 @@ from app.deps.device_cookie import get_device_config, DeviceConfig
 VenueAccountRouter = APIRouter()
 
 
-@VenueAccountRouter.get("/", response_model=list[VenueAccount])
+@VenueAccountRouter.get("/", response_model=list[VenueAccountRead])
 async def list_accounts(session: AsyncSession = Depends(get_session)):
     return await VenueAccountService.list_accounts(session)
 
@@ -61,3 +61,12 @@ async def delete_account(account_id: str, session: AsyncSession = Depends(get_se
             status_code=status.HTTP_404_NOT_FOUND, detail="Venue account not found"
         )
     return None
+
+
+@VenueAccountRouter.get("/room/{room_id}", response_model=VenueAccountRead | None)
+async def get_current_account_for_room(
+    room_id: int,
+    session: AsyncSession = Depends(get_session),
+):
+    acct = await VenueAccountService.get_current_account_for_room(room_id, session)
+    return acct

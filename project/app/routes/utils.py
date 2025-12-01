@@ -20,8 +20,8 @@ async def seed_database(session: AsyncSession = Depends(get_session)):
             detail="Database seeding is only allowed in development environment",
         )
     # Implement your seeding logic here
-    await run_seeds(session)
-    return {"status": "database seeded successfully"}
+    status =  await run_seeds(session)
+    return {"status": status}
 
 
 @UtilsRouter.get("/device-config")
@@ -38,3 +38,9 @@ async def get_device_config(request: Request):
     except Exception:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     return cfg
+
+@UtilsRouter.get("/time-slots", response_model=list[str])
+async def get_time_slots():
+    """Return available time slots for reservations."""
+    from app.core.constants import TIME_SLOTS
+    return TIME_SLOTS
