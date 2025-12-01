@@ -4,8 +4,11 @@ from app.core.constants import TIME_SLOTS
 from sqlmodel import select
 from sqlalchemy.orm import selectinload
 
+from app.services.spirit import SpiritService
+from app.services.type_relation import TypeRelationService
 from app.models import BanquetTable, BanquetSeat, Reservation, VenueAccount, Spirit
 from sqlalchemy import func, exists
+from app.core.tools import logger
 
 
 class BanquetService:
@@ -26,7 +29,11 @@ class BanquetService:
         spirit_id: str, start_dt: datetime, session
     ) -> List[Dict]:
         # Parse incoming date/datetime and normalize to UTC
+        spirit = await SpiritService.get_spirit(spirit_id, session)
+        if not spirit:
+            return []
 
+        typeId = spirit.typeId
         end_dt = start_dt + timedelta(hours=1)
 
         # Load tables with seats
@@ -65,27 +72,56 @@ class BanquetService:
                 if r.seatId not in reservations_map:
                     reservations_map[r.seatId] = r
 
+            def _map_seats(seat):
+                seat_d = seat.dict()
+                resv = reservations_map.get(seat.id)
+                if resv:
+                    seat_d["reservationId"] = resv.id
+                    seat_d["available"] = False
+                    seat_d["spirit"] = (
+                        getattr(resv.account, "spirit", None).dict()
+                        if getattr(resv.account, "spirit", None)
+                        else None
+                    )
+                    seat_d["spirit"]["type"] = (
+                        getattr(resv.account.spirit, "type", None).dict()
+                        if getattr(resv.account.spirit, "type", None)
+                        else None
+                    )
+
+                return seat_d
+
         out_tables = []
         for t in tables:
             # Go through each table
             tbl = t.dict()
             occupies = []
-            seats_out = []
-            for s in getattr(t, "availableSeats", []) or []:
+
+            seats_out = list(
+                map(
+                    _map_seats,
+                    sorted(
+                        getattr(t, "availableSeats", []).copy(),
+                        key=lambda s: s.seatNumber,
+                    ),
+                )
+            )
+            for i, seat_d in enumerate(seats_out):
+                nextSeat = seats_out[i + 1] if i + 1 < len(seats_out) else seats_out[0]
+                pastSeat = seats_out[i - 1] if i - 1 >= 0 else seats_out[-1]
                 # Go through each seat
-                seat_d = s.dict()
-                resv = reservations_map.get(s.id)
-                if resv:
-                    seat_d["reservationId"] = resv.id
-                    seat_d["available"] = False
-                    acct = getattr(resv, "account", None)
-                    if acct and getattr(acct, "spirit", None):
-                        sp = acct.spirit
-                        sp_d = sp.dict()
-                        if getattr(sp, "type", None):
-                            sp_d["type"] = sp.type.dict()
-                        occupies.append(sp_d)
-                seats_out.append(seat_d)
+                if seat_d.get("spirit", None):
+                    sp = seat_d["spirit"]
+                    tr = await TypeRelationService.get_relation_between(
+                        typeId, sp["typeId"], session
+                    )
+                    relation = tr.relation if tr else "allow"
+                    if relation == "forbidden":
+                        tbl["available"] = False
+                    elif relation == "separation":
+                        pastSeat["available"] = False
+                        nextSeat["available"] = False
+                    occupies.append(sp)
             tbl["availableSeats"] = seats_out
             tbl["occupies"] = occupies
             out_tables.append(tbl)
@@ -186,7 +222,21 @@ class BanquetService:
         start_of_day = datetime.combine(d, time.min).replace(tzinfo=timezone.utc)
         end_of_day = start_of_day + timedelta(days=1)
 
-        # For each timeslot, count seats that have no overlapping reservation
+        # Timeslot strings are expressed in Bogota local time (UTC-5).
+        BOGOTA_TZ = timezone(timedelta(hours=-5))
+
+        # Compare the requested day against "today" in Bogota.
+        today_bogota = datetime.now(timezone.utc).astimezone(BOGOTA_TZ).date()
+        if d < today_bogota:
+            return []
+
+        # If the requested date is today in Bogota, compute current UTC time to
+        # exclude timeslots that have already passed when converted to UTC.
+        is_today = d == today_bogota
+        now_utc = datetime.now(timezone.utc) if is_today else None
+
+        # For each timeslot, ask `list_available_seats` for the slot start time
+        # and treat a slot as available if any seat across all tables is free.
         available_slots: List[str] = []
 
         for slot in TIME_SLOTS:
@@ -195,32 +245,54 @@ class BanquetService:
                 slot_time = datetime.strptime(slot, "%I:%M %p").time()
             except Exception:
                 continue
-            slot_start = datetime.combine(d, slot_time).replace(tzinfo=timezone.utc)
+            # Interpret the slot time as Bogota-local, then convert to UTC
+            # for comparisons and for passing into the seat-availability
+            # routine which expects UTC datetimes.
+            slot_start_local = datetime.combine(d, slot_time).replace(tzinfo=BOGOTA_TZ)
+            slot_start = slot_start_local.astimezone(timezone.utc)
             slot_end = slot_start + timedelta(hours=1)
 
-            # Build EXISTS subquery: does a reservation exist for the seat overlapping the slot?
-           
+            # If we're computing for today (Bogota), skip slots that have already passed.
+            if is_today and now_utc is not None and slot_end <= now_utc:
+                continue
 
-            overlap_subq = select(Reservation).where(
-                Reservation.seatId == BanquetSeat.id,
-                Reservation.startTime < slot_end,
-                Reservation.endTime > slot_start,
-            )
-
-            # Count seats that do NOT have an overlapping reservation
-            count_q = (
-                select(func.count())
-                .select_from(BanquetSeat)
-                .where(~exists(overlap_subq))
-            )
-            res_count = await session.exec(count_q)
+            # Use the existing seat-availability logic which applies type
+            # restrictions and reservation checks per seat. Pass UTC datetime.
             try:
-                free_count = int(res_count.one())
+                tables = await BanquetService.list_available_seats(
+                    spirit_id, slot_start, session
+                )
             except Exception:
-                # fallback to scalar
-                free_count = int(res_count.scalar_one() or 0)
+                # If something goes wrong computing seats for this slot, skip it.
+                continue
 
-            if free_count > 0:
+            slot_has_free = False
+            for tbl in tables:
+                # If the table itself is marked unavailable, treat all seats as unavailable
+                table_unavailable = tbl.get("available") is False
+
+                seats = tbl.get("availableSeats", [])
+                for seat in seats:
+                    if table_unavailable:
+                        # table-level restriction => seat unavailable
+                        continue
+
+                    # If seat has a reservationId it's taken. If 'available' is present
+                    # and False then it's restricted/unavailable.
+                    if seat.get("reservationId"):
+                        continue
+
+                    if seat.get("available") is False:
+                        continue
+
+                    # Seat is free for this slot
+                    slot_has_free = True
+                    break
+
+                if slot_has_free:
+                    break
+
+            if slot_has_free:
                 available_slots.append(slot)
 
         return available_slots

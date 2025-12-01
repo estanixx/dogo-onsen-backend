@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
@@ -9,8 +9,13 @@ PrivateVenueRouter = APIRouter()
 
 
 @PrivateVenueRouter.get("/", response_model=list[PrivateVenue])
-async def list_private_venues(session: AsyncSession = Depends(get_session)):
-    return await PrivateVenueService.list_private_venues(session)
+async def list_private_venues(
+    startTime: str | None = Query(None, description="Account ID"),
+    endTime: str | None = Query(None, description="Account ID"),
+    session: AsyncSession = Depends(get_session),
+):
+    filters = {"startTime": startTime, "endTime": endTime}
+    return await PrivateVenueService.list_private_venues(filters, session)
 
 
 @PrivateVenueRouter.post(

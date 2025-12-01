@@ -11,6 +11,8 @@ from app.routes.item_intake import ItemIntakeRouter
 from app.routes.private_venue import PrivateVenueRouter
 from app.routes.utils import UtilsRouter
 from app.routes.deposit import DepositRouter
+from app.routes.inventory_order import InventoryOrderRouter
+from app.routes.order import OrderRouter
 
 __all__ = [
     "ServiceRouter",
@@ -26,4 +28,6 @@ __all__ = [
     "PrivateVenueRouter",
     "UtilsRouter",
     "DepositRouter",
+    "InventoryOrderRouter",
+    "OrderRouter",
 ]

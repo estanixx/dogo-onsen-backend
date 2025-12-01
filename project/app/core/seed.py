@@ -155,7 +155,7 @@ async def seed_spirits(session: AsyncSession):
 async def seed_venue_accounts(session: AsyncSession):
     for idx, (id, name, image) in enumerate(spirit_data, start=1):
         account = VenueAccount(
-            id=idx,
+            id=f"{idx}",
             spiritId=id,
             privateVenueId=idx,
             startTime=startTime,
@@ -179,13 +179,37 @@ async def seed_services(session: AsyncSession):
 async def run_seeds(session: AsyncSession):
     try:
         await seed_spirit_types(session)
-        await seed_spirit_type_relations(session)
-        await seed_spirits(session)
-        await seed_services(session)
-        await seed_private_venue(10, session)
-        await seed_venue_accounts(session)
-        await seed_banquet(10, session)
-        return "ok"
     except Exception as e:
         print(f"Error seeding spirit types or relations: {e}")
         return "error"
+    try:
+        await seed_spirit_type_relations(session)
+    except Exception as e:
+        print(f"Error seeding spirit type relations: {e}")
+        return "error"
+    try:
+        await seed_spirits(session)
+    except Exception as e:
+        print(f"Error seeding spirits: {e}")
+        return "error"
+    try:
+        await seed_services(session)
+    except Exception as e:
+        print(f"Error seeding services: {e}")
+        return "error"
+    try:
+        await seed_private_venue(10, session)
+    except Exception as e:
+        print(f"Error seeding private venues: {e}")
+        return "error"
+    try:
+        await seed_venue_accounts(session)
+    except Exception as e:
+        print(f"Error seeding venue accounts: {e}")
+        return "error"
+    try:
+        await seed_banquet(10, session)
+    except Exception as e:
+        print(f"Error seeding banquets: {e}")
+        return "error"
+    return "ok"

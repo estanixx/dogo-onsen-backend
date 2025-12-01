@@ -5,13 +5,15 @@ from app.services.reservation import ReservationService
 from app.services.service import ServiceService
 from app.services.spirit import SpiritService
 from app.services.spirit_type import SpiritTypeService
+from app.services.type_relation import TypeRelationService
 from app.services.venue_account import VenueAccountService
 from app.services.item import ItemService
 from app.services.item_intake import ItemIntakeService
 from app.services.private_venue import PrivateVenueService
 from app.services.clerk_api import ClerkAPIService
 from app.services.deposit import DepositService
-from app.services.inventory_item import InventoryItemService
+from app.services.inventory_order import InventoryOrderService
+from app.services.order import OrderService
 
 __all__ = [
     "BanquetService",
@@ -21,11 +23,13 @@ __all__ = [
     "ServiceService",
     "SpiritService",
     "SpiritTypeService",
+    "TypeRelationService",
     "VenueAccountService",
     "ItemService",
     "ItemIntakeService",
     "PrivateVenueService",
     "ClerkAPIService",
     "DepositService",
-    "InventoryItemService",
+    "InventoryOrderService",
+    "OrderService",
 ]

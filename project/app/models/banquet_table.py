@@ -34,7 +34,9 @@ class BanquetTableRead(SQLModel):
     id: int
     capacity: int = 6
     state: bool = True
+    available: bool = True
     availableSeats: Optional[List[BanquetSeatRead]] = None
+
 
 
 class AvailableBanquetTableRead(BanquetTableRead):

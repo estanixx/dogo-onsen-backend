@@ -4,7 +4,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Reservation, ReservationCreate, ReservationUpdate
+from app.models import Reservation, ReservationCreate, ReservationUpdate, VenueAccount, Spirit
 from app.models import DateRequest
 from app.core.tools import logger
 
@@ -78,7 +78,7 @@ class ReservationService:
                 except Exception:
                     raise ValueError("Invalid datetime filter format")
         q = q.options(
-            selectinload(Reservation.account),
+            selectinload(Reservation.account).selectinload(VenueAccount.spirit).selectinload(Spirit.type),
             selectinload(Reservation.service),
             selectinload(Reservation.seat),
         )

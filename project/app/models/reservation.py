@@ -8,7 +8,7 @@ from sqlalchemy import Column, JSON, DateTime, func
 
 from app.models.service import Service
 from app.models.banquet_seat import BanquetSeat
-from app.models.venue_account import VenueAccount
+from app.models.venue_account import VenueAccount, VenueAccountRead
 
 class ReservationBase(SQLModel):
     accountId: str = Field(foreign_key="venue_account.id") 
@@ -82,4 +82,4 @@ class ReservationRead(SQLModel):
     updatedAt: datetime
     service: Optional["Service"]
     seat: Optional["BanquetSeat"]
-    account: Optional["VenueAccount"]
+    account: Optional["VenueAccountRead"]

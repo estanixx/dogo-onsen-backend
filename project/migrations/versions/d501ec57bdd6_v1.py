@@ -1,8 +1,8 @@
 """v1
 
-Revision ID: 5668f54c673c
+Revision ID: d501ec57bdd6
 Revises: 
-Create Date: 2025-11-30 18:41:25.946534
+Create Date: 2025-12-01 22:28:02.813192
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel             # NEW
 
 
 # revision identifiers, used by Alembic.
-revision = '5668f54c673c'
+revision = 'd501ec57bdd6'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -25,16 +25,9 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('deposit',
-    sa.Column('date', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('accountId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('amount', sa.Integer(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('employee',
-    sa.Column('tareas_asignadas', sa.JSON(), server_default='[]', nullable=False),
     sa.Column('estado', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('tareas_asignadas', sa.JSON(), server_default='[]', nullable=False),
     sa.Column('firstName', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('lastName', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
@@ -42,17 +35,17 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('clerkId')
     )
     op.create_index(op.f('ix_employee_clerkId'), 'employee', ['clerkId'], unique=False)
-    op.create_table('inventory_item',
-    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('quantity', sa.Integer(), nullable=False),
-    sa.Column('unit', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('item',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('order',
+    sa.Column('idEmployee', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('orderDate', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('deliveryDate', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('private_venue',
@@ -60,13 +53,13 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('service',
-    sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('eiltRate', sa.Float(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('spirit_type',
@@ -84,21 +77,29 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['tableId'], ['banquet_table.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('inventory_order',
+    sa.Column('idOrder', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('idItem', sa.Integer(), nullable=False),
+    sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['idOrder'], ['order.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('spirit',
-    sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('typeId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('active', sa.Boolean(), nullable=False),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['typeId'], ['spirit_type.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('type_relation',
-    sa.Column('relation', sa.String(), nullable=False),
     sa.Column('source_type_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('target_type_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('relation', sa.String(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['source_type_id'], ['spirit_type.id'], ),
     sa.ForeignKeyConstraint(['target_type_id'], ['spirit_type.id'], ),
@@ -106,38 +107,46 @@ def upgrade() -> None:
     )
     op.create_table('item_intake',
     sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('itemId', sa.Integer(), nullable=False),
     sa.Column('seatId', sa.Integer(), nullable=True),
     sa.Column('serviceId', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['itemId'], ['item.id'], ),
     sa.ForeignKeyConstraint(['seatId'], ['banquet_seat.id'], ),
     sa.ForeignKeyConstraint(['serviceId'], ['service.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('venue_account',
-    sa.Column('startTime', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('endTime', sa.DateTime(timezone=True), nullable=False),
     sa.Column('spiritId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('privateVenueId', sa.Integer(), nullable=False),
+    sa.Column('startTime', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('endTime', sa.DateTime(timezone=True), nullable=False),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('pin', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.ForeignKeyConstraint(['privateVenueId'], ['private_venue.id'], ),
     sa.ForeignKeyConstraint(['spiritId'], ['spirit.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('deposit',
+    sa.Column('accountId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('amount', sa.Integer(), nullable=False),
+    sa.Column('date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['accountId'], ['venue_account.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('reservation',
+    sa.Column('accountId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('startTime', sa.DateTime(timezone=True), nullable=False),
     sa.Column('endTime', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('accountId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('seatId', sa.Integer(), nullable=True),
     sa.Column('serviceId', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('isRedeemed', sa.Boolean(), nullable=False),
     sa.Column('isRated', sa.Boolean(), nullable=False),
     sa.Column('rating', sa.Float(), nullable=True),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['accountId'], ['venue_account.id'], ),
     sa.ForeignKeyConstraint(['seatId'], ['banquet_seat.id'], ),
     sa.ForeignKeyConstraint(['serviceId'], ['service.id'], ),
@@ -149,18 +158,19 @@ def upgrade() -> None:
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('reservation')
+    op.drop_table('deposit')
     op.drop_table('venue_account')
     op.drop_table('item_intake')
     op.drop_table('type_relation')
     op.drop_table('spirit')
+    op.drop_table('inventory_order')
     op.drop_table('banquet_seat')
     op.drop_table('spirit_type')
     op.drop_table('service')
     op.drop_table('private_venue')
+    op.drop_table('order')
     op.drop_table('item')
-    op.drop_table('inventory_item')
     op.drop_index(op.f('ix_employee_clerkId'), table_name='employee')
     op.drop_table('employee')
-    op.drop_table('deposit')
     op.drop_table('banquet_table')
     # ### end Alembic commands ###

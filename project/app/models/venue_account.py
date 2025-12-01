@@ -3,18 +3,18 @@ import uuid
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship
 from sqlalchemy import Column, DateTime, func, String
-from app.models.spirit import Spirit, SpiritRead
 import secrets
 
 
 from app.core.tools import logger
 
 # root validators not used here
+from app.models.spirit import Spirit, SpiritRead
 
+from app.models.deposit import Deposit
 if TYPE_CHECKING:
-    from app.models.reservation import Reservation
     from app.models.private_venue import PrivateVenue
-    from app.models.deposit import Deposit
+    from app.models.reservation import Reservation
 
 
 class VenueAccountBase(SQLModel):

@@ -43,6 +43,7 @@ class VenueAccountService:
         except Exception:
             total_consumed = float(cons_res.scalar_one() or 0)
         return total_deposits - total_consumed
+
     @staticmethod
     async def get_current_account_for_room(
         room_id: int, session: AsyncSession
@@ -60,16 +61,34 @@ class VenueAccountService:
         if not acct:
             return None
 
-        
         acct = VenueAccountRead.from_orm(acct)
-        acct.eiltBalance = await VenueAccountService._compute_account_balance(acct, session)
+        acct.eiltBalance = await VenueAccountService._compute_account_balance(
+            acct, session
+        )
 
         return acct
 
     @staticmethod
-    async def list_accounts(session: AsyncSession) -> List[VenueAccount]:
-        res = await session.exec(select(VenueAccount))
-        return res.all()
+    async def list_accounts(session: AsyncSession) -> List[VenueAccountRead]:
+        # Eager-load related models so Pydantic serialization won't trigger
+        # lazy IO (which causes MissingGreenlet errors).
+        res = await session.exec(
+            select(VenueAccount).options(
+                selectinload(VenueAccount.spirit).selectinload(Spirit.type)
+            )
+        )
+        accts = res.all()
+
+        out: List[VenueAccountRead] = []
+        for acct in accts:
+            read = VenueAccountRead.from_orm(acct)
+            # Compute balance inside the async context to avoid lazy DB IO
+            read.eiltBalance = await VenueAccountService._compute_account_balance(
+                acct, session
+            )
+            out.append(read)
+
+        return out
 
     @staticmethod
     async def create_account(
@@ -94,7 +113,9 @@ class VenueAccountService:
         if not acct:
             return None
         acct = VenueAccountRead.from_orm(acct)
-        acct.eiltBalance = await VenueAccountService._compute_account_balance(acct, session)
+        acct.eiltBalance = await VenueAccountService._compute_account_balance(
+            acct, session
+        )
         return acct
 
     @staticmethod
