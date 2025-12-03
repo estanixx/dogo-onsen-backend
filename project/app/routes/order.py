@@ -19,7 +19,7 @@ async def create_order(order: OrderCreate, session: AsyncSession = Depends(get_s
 
 
 @OrderRouter.get("/{order_id}", response_model=Order)
-async def get_order(order_id: int, session: AsyncSession = Depends(get_session)):
+async def get_order(order_id: str, session: AsyncSession = Depends(get_session)):
     o = await OrderService.get_order(order_id, session)
     if not o:
         raise HTTPException(
@@ -30,7 +30,7 @@ async def get_order(order_id: int, session: AsyncSession = Depends(get_session))
 
 @OrderRouter.put("/{order_id}", response_model=Order)
 async def update_order(
-    order_id: int, order: OrderUpdate, session: AsyncSession = Depends(get_session)
+    order_id: str, order: OrderUpdate, session: AsyncSession = Depends(get_session)
 ):
     o = await OrderService.update_order(order_id, order, session)
     if not o:
@@ -41,7 +41,7 @@ async def update_order(
 
 
 @OrderRouter.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_order(order_id: int, session: AsyncSession = Depends(get_session)):
+async def delete_order(order_id: str, session: AsyncSession = Depends(get_session)):
     ok = await OrderService.delete_order(order_id, session)
     if not ok:
         raise HTTPException(
