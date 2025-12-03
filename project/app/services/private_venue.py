@@ -31,7 +31,29 @@ class PrivateVenueService:
         # fallback
         res = await session.exec(select(PrivateVenue))
         return res.all()
-    
+
+    @staticmethod
+    async def today_occupancy_rate(session: AsyncSession) -> float:
+        # Calculate percentage of private venues currently occupied
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc)
+        res = await session.exec(select(PrivateVenue))
+        pvs = res.all()
+        if not pvs:
+            return 0.0
+
+        total = len(pvs)
+        occ_q = select(VenueAccount).where(
+            VenueAccount.startTime <= now, VenueAccount.endTime >= now
+        )
+        occ_res = await session.exec(occ_q)
+        occ = occ_res.all()
+        # Count unique privateVenueIds
+        occ_ids = {a.privateVenueId for a in occ}
+        rate = (len(occ_ids) / total) * 100.0
+        return rate
+
     @staticmethod
     async def create_private_venue(
         pv_in: PrivateVenueCreate, session: AsyncSession

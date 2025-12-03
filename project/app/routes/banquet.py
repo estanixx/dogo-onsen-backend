@@ -34,7 +34,7 @@ async def list_tables(session: AsyncSession = Depends(get_session)):
     "/table/available/{spirit_id}", response_model=List[AvailableBanquetTableRead]
 )
 async def list_available_seats(
-    spirit_id: str,
+    spirit_id: int,
     payload: DateTimeRequest = Body(...),
     session: AsyncSession = Depends(get_session),
 ):
@@ -123,7 +123,7 @@ async def get_seat(seat_id: int, session: AsyncSession = Depends(get_session)):
 
 @BanquetRouter.get("/{spirit_id}/available_time_slots", response_model=List[str])
 async def available_time_slots_for_spirit(
-    spirit_id: str,
+    spirit_id: int,
     date: str = Query(..., description="Date (YYYY-MM-DD) or ISO datetime"),
     session: AsyncSession = Depends(get_session),
 ):

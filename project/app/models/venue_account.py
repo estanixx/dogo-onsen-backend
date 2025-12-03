@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 class VenueAccountBase(SQLModel):
     # TODO: Add attributes
-    spiritId: str = Field(foreign_key="spirit.id")
+    spiritId: int = Field(foreign_key="spirit.id")
     privateVenueId: int = Field(foreign_key="private_venue.id")
     startTime: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False),
@@ -52,7 +52,7 @@ class VenueAccount(VenueAccountBase, table=True):
 
 class VenueAccountRead(VenueAccountBase):
     id: Optional[str]
-    spiritId: str
+    spiritId: int
     privateVenueId: int
     startTime: datetime
     endTime: datetime
@@ -71,4 +71,4 @@ class VenueAccountCreate(VenueAccountBase):
 
 class VenueAccountUpdate(SQLModel):
     # TODO: Complete
-    spiritId: Optional[str] = None
+    spiritId: Optional[int] = None

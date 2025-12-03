@@ -22,7 +22,7 @@ async def create_spirit(
 
 
 @SpiritRouter.get("/{spirit_id}", response_model=SpiritRead)
-async def get_spirit(spirit_id: str, session: AsyncSession = Depends(get_session)):
+async def get_spirit(spirit_id: int, session: AsyncSession = Depends(get_session)):
     s = await SpiritService.get_spirit(spirit_id, session)
     if not s:
         raise HTTPException(
@@ -33,7 +33,7 @@ async def get_spirit(spirit_id: str, session: AsyncSession = Depends(get_session
 
 @SpiritRouter.put("/{spirit_id}", response_model=Spirit)
 async def update_spirit(
-    spirit_id: str, spirit: SpiritUpdate, session: AsyncSession = Depends(get_session)
+    spirit_id: int, spirit: SpiritUpdate, session: AsyncSession = Depends(get_session)
 ):
     s = await SpiritService.update_spirit(spirit_id, spirit, session)
     if not s:
@@ -44,7 +44,7 @@ async def update_spirit(
 
 
 @SpiritRouter.delete("/{spirit_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_spirit(spirit_id: str, session: AsyncSession = Depends(get_session)):
+async def delete_spirit(spirit_id: int, session: AsyncSession = Depends(get_session)):
     ok = await SpiritService.delete_spirit(spirit_id, session)
     if not ok:
         raise HTTPException(

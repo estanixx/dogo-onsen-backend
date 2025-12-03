@@ -26,7 +26,7 @@ class BanquetService:
 
     @staticmethod
     async def list_available_seats(
-        spirit_id: str, start_dt: datetime, session
+        spirit_id: int, start_dt: datetime, session
     ) -> List[Dict]:
         # Parse incoming date/datetime and normalize to UTC
         spirit = await SpiritService.get_spirit(spirit_id, session)
@@ -296,3 +296,60 @@ class BanquetService:
                 available_slots.append(slot)
 
         return available_slots
+
+    @staticmethod
+    async def today_table_availability(session) -> int:
+        """
+        Return the number of seats taken in all tables for today (UTC day).
+        """
+        from datetime import datetime, timezone
+
+        today = datetime.now(timezone.utc)
+        # Bogota
+        start_dt = today
+        end_dt = start_dt + timedelta(hours=1)
+        logger.debug(f"Computing banquet availability for {start_dt} to {end_dt}")
+        from app.models import Reservation
+
+        q = (
+            select(Reservation)
+            .where(Reservation.seatId != None)
+            .where(Reservation.startTime >= start_dt)
+            .where(Reservation.startTime < end_dt)
+        )
+        res = await session.exec(q)
+        reservations = res.all()
+        # Count distinct seat reservations (one reservation per seat/time)
+        taken = len([r for r in reservations if r.seatId is not None])
+        # Instead of returning a single int, return a list of table availability
+        # dicts containing table id, capacity, takenSeats and availableSeats.
+
+        # Load tables and their seats
+        res_t = await session.exec(
+            select(BanquetTable).options(selectinload(BanquetTable.availableSeats))
+        )
+        tables = res_t.all()
+
+        # Map seatId -> reservation (any reservation during the day means seat taken)
+        taken_seat_ids = {r.seatId for r in reservations if r.seatId is not None}
+
+        out: List[dict] = []
+        for t in tables:
+            seats = getattr(t, "availableSeats", [])
+            capacity = (
+                int(t.capacity)
+                if getattr(t, "capacity", None) is not None
+                else len(seats)
+            )
+            taken_count = sum(1 for s in seats if s.id in taken_seat_ids)
+            available = max(0, capacity - taken_count)
+            out.append(
+                {
+                    "id": t.id,
+                    "capacity": capacity,
+                    "takenSeats": taken_count,
+                    "availableSeats": available,
+                }
+            )
+
+        return out

@@ -30,7 +30,7 @@ from app.models.venue_account import (
     VenueAccountUpdate,
     VenueAccountRead,
 )
-from app.models.utils import DateRequest, DateTimeRequest
+from app.models.utils import DateRequest, DateTimeRequest, DashboardRead, ServiceSummary, ServiceWithReservations
 from app.models.item import Item, ItemCreate, ItemUpdate, ItemRead
 from app.models.item_intake import (
     ItemIntake,
