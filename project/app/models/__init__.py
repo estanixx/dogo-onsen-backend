@@ -54,6 +54,7 @@ from app.models.order import (
     Order,
     OrderCreate,
     OrderUpdate,
+    OrderRead,
 )
 
 __all__ = [
@@ -114,4 +115,5 @@ __all__ = [
     "Order",
     "OrderCreate",
     "OrderUpdate",
+    "OrderRead",
 ]

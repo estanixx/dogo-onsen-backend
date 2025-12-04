@@ -1,5 +1,6 @@
 from typing import List, Optional
 from sqlmodel import select
+from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Item, ItemCreate, ItemUpdate
@@ -8,7 +9,12 @@ from app.models import Item, ItemCreate, ItemUpdate
 class ItemService:
     @staticmethod
     async def list_items(session: AsyncSession) -> List[Item]:
-        res = await session.exec(select(Item))
+        res = await session.exec(
+            select(Item).options(
+                selectinload(Item.inventory_orders),
+                selectinload(Item.intakes)
+            )
+        )
         return res.all()
 
     @staticmethod
@@ -16,12 +22,17 @@ class ItemService:
         item = Item(**item_in.dict())
         session.add(item)
         await session.commit()
-        await session.refresh(item)
+        await session.refresh(item, ['inventory_orders', 'intakes'])
         return item
 
     @staticmethod
     async def get_item(item_id: int, session: AsyncSession) -> Optional[Item]:
-        res = await session.exec(select(Item).where(Item.id == item_id))
+        res = await session.exec(
+            select(Item).where(Item.id == item_id).options(
+                selectinload(Item.inventory_orders),
+                selectinload(Item.intakes)
+            )
+        )
         return res.first()
 
     @staticmethod
@@ -37,7 +48,7 @@ class ItemService:
             setattr(item, key, value)
         session.add(item)
         await session.commit()
-        await session.refresh(item)
+        await session.refresh(item, ['inventory_orders', 'intakes'])
         return item
 
     @staticmethod

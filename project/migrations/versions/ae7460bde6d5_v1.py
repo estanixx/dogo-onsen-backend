@@ -1,8 +1,8 @@
 """v1
 
-Revision ID: d501ec57bdd6
+Revision ID: ae7460bde6d5
 Revises: 
-Create Date: 2025-12-01 22:28:02.813192
+Create Date: 2025-12-04 15:47:21.402700
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel             # NEW
 
 
 # revision identifiers, used by Alembic.
-revision = 'd501ec57bdd6'
+revision = 'ae7460bde6d5'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -38,6 +38,7 @@ def upgrade() -> None:
     op.create_table('item',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('unit', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -45,7 +46,7 @@ def upgrade() -> None:
     sa.Column('idEmployee', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('orderDate', sa.DateTime(timezone=True), nullable=False),
     sa.Column('deliveryDate', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('private_venue',
@@ -78,10 +79,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('inventory_order',
-    sa.Column('idOrder', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('idOrder', sa.Integer(), nullable=False),
     sa.Column('idItem', sa.Integer(), nullable=False),
     sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.Column('redeemed', sa.Boolean(), nullable=False),
     sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.ForeignKeyConstraint(['idItem'], ['item.id'], ),
     sa.ForeignKeyConstraint(['idOrder'], ['order.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

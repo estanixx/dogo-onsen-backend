@@ -6,7 +6,7 @@ from sqlmodel import Field, SQLModel, Relationship
 from sqlalchemy import Column, DateTime
 
 if TYPE_CHECKING:
-    from models.inventory_order import InventoryOrder
+    from app.models.inventory_order import InventoryOrder
 
 
 class OrderBase(SQLModel):
@@ -22,9 +22,7 @@ class OrderBase(SQLModel):
 class Order(OrderBase, table=True):
     __tablename__ = "order"
 
-    id: Optional[str] = Field(
-        default_factory=lambda: str(uuid.uuid4()), primary_key=True
-    )
+    id: int | None = Field(default=None, primary_key=True)
     
     items: List["InventoryOrder"] = Relationship(back_populates="order")
 
@@ -37,3 +35,16 @@ class OrderUpdate(SQLModel):
     idEmployee: Optional[str] = None
     # orderDate: Optional[datetime] = None #Esto no se debería actualizar supongo
     deliveryDate: Optional[datetime] = None
+
+
+# Response models for serialization
+class InventoryOrderInOrder(SQLModel):
+    idOrder: int
+    idItem: int
+    quantity: int
+    redeemed: Optional[bool] = None
+
+
+class OrderRead(OrderBase):
+    id: int
+    items: List[InventoryOrderInOrder] = []
