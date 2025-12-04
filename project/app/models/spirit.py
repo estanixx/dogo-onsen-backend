@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 
 class SpiritBase(SQLModel):
+    id: int = Field(primary_key=True)
     name: str = Field(nullable=False)
     typeId: str = Field(nullable=False, foreign_key="spirit_type.id") 
     # accountId: str = Field(nullable=False)
@@ -21,7 +22,6 @@ class SpiritBase(SQLModel):
 
 
 class Spirit(SpiritBase, table=True):
-    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     __tablename__ = 'spirit'
 
     createdAt: datetime = Field(
@@ -39,8 +39,7 @@ class Spirit(SpiritBase, table=True):
 
 
 class SpiritCreate(SpiritBase):
-    id: Optional[str] = None
-
+    pass
 
 class SpiritUpdate(SQLModel):
     name: Optional[str] = None
@@ -51,7 +50,8 @@ class SpiritUpdate(SQLModel):
     active: Optional[bool] = None
 
 class SpiritRead(SpiritBase):
-    id: Optional[str]
+    id: int
     createdAt: datetime
     updatedAt: datetime
     type: "SpiritType"
+    currentlyInVenue: Optional[bool] = None

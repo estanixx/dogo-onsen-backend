@@ -2,16 +2,25 @@ from typing import List, Optional
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from datetime import datetime, date, time, timedelta, timezone
-
+from sqlalchemy.orm import selectinload
 from app.core.constants import TIME_SLOTS
 
-from app.models import Service, ServiceCreate, ServiceUpdate
+from app.models.service import Service as ServiceModel, ServiceCreate, ServiceUpdate
+
+# keep the original name for type hints and instantiation
+Service = ServiceModel
+from app.models.reservation import Reservation, ReservationRead
+from app.models.utils import ServiceSummary, ServiceWithReservations
 
 
 class ServiceService:
     @staticmethod
-    async def list_services(session: AsyncSession, q: Optional[str] = None) -> List[Service]:
-        res = await session.exec(select(Service).where(Service.name.contains(q)) if q else select(Service))
+    async def list_services(
+        session: AsyncSession, q: Optional[str] = None
+    ) -> List[Service]:
+        res = await session.exec(
+            select(Service).where(Service.name.contains(q)) if q else select(Service)
+        )
         return res.all()
 
     @staticmethod
@@ -97,3 +106,56 @@ class ServiceService:
 
         available = [t for t in TIME_SLOTS if t not in reserved_slots]
         return available
+
+    @staticmethod
+    async def today_reservations_per_service(
+        session: AsyncSession,
+    ) -> List[ServiceWithReservations]:
+        # Compute today's start/end in UTC
+        today = datetime.now(timezone.utc).date()
+        start_dt = datetime.combine(today, time.min).replace(tzinfo=timezone.utc)
+        end_dt = start_dt + timedelta(days=1)
+
+        # Fetch reservations for today and their services
+        q = (
+            select(Reservation)
+            .where(Reservation.startTime >= start_dt)
+            .where(Reservation.startTime < end_dt)
+            .options(selectinload(Reservation.service))
+        )
+        res = await session.exec(q)
+        reservations = res.all()
+
+        # Build a mapping serviceId -> list of reservations
+        groups: dict[str, list[Reservation]] = {}
+        for r in reservations:
+            sid = r.serviceId or (
+                getattr(r.service, "id", None) if getattr(r, "service", None) else None
+            )
+            if sid is None:
+                continue
+            groups.setdefault(sid, []).append(r)
+
+        # Load all services and return a summary per-service (count may be zero)
+        svc_q = select(ServiceModel)
+        svc_res = await session.exec(svc_q)
+        svcs = svc_res.all()
+
+        out: List[ServiceWithReservations] = []
+        for svc in svcs:
+            rlist = groups.get(svc.id, [])
+            svc_summary = ServiceSummary(
+                id=svc.id,
+                name=svc.name,
+                eiltRate=svc.eiltRate,
+                image=getattr(svc, "image", None),
+                description=getattr(svc, "description", None),
+            )
+            out.append(
+                ServiceWithReservations(
+                    service=svc_summary,
+                    reservations_count=len(rlist),
+                )
+            )
+
+        return out

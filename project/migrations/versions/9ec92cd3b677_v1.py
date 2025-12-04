@@ -1,8 +1,8 @@
 """v1
 
-Revision ID: ae7460bde6d5
+Revision ID: 9ec92cd3b677
 Revises: 
-Create Date: 2025-12-04 15:47:21.402700
+Create Date: 2025-12-04 16:03:46.703102
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel             # NEW
 
 
 # revision identifiers, used by Alembic.
-revision = 'ae7460bde6d5'
+revision = '9ec92cd3b677'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -89,11 +89,11 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('spirit',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('typeId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('image', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('active', sa.Boolean(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('createdAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updatedAt', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['typeId'], ['spirit_type.id'], ),
@@ -120,7 +120,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('venue_account',
-    sa.Column('spiritId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('spiritId', sa.Integer(), nullable=False),
     sa.Column('privateVenueId', sa.Integer(), nullable=False),
     sa.Column('startTime', sa.DateTime(timezone=True), nullable=False),
     sa.Column('endTime', sa.DateTime(timezone=True), nullable=False),

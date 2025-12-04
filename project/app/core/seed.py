@@ -78,27 +78,27 @@ password = "1234"
 spirit_data = [
     # id, name, image
     (
-        "1",
+        1,
         "Samuel Colorado",
         "https://static.wikia.nocookie.net/bobesponja/images/8/87/Holand%C3%A9s_Volador.png/revision/latest/scale-to-width/360?cb=20101128010045",
     ),
     (
-        "2",
+        2,
         "Estanix Arango",
         "https://preview.redd.it/whats-episode-is-this-picture-where-spongebob-was-a-ghost-v0-0pr0srvi24vc1.png?width=640&crop=smart&auto=webp&s=519b6dfa0bf0df3f8303729de1ea0d13b09a7838",
     ),
     (
-        "3",
+        3,
         "Juanpa Mejía",
         "https://wallpapers.com/images/thumbnail/goofy-ahh-picture-6pgwqo9l9y70ejek.webp",
     ),
     (
-        "4",
+        4,
         "Wendy Yurani",
         "https://i.pinimg.com/474x/ae/90/43/ae904345a7603bd8feec04caa48d97c1.jpg",
     ),
     (
-        "5",
+        5,
         "Kelsier",
         "https://uploads.coppermind.net/thumb/Kelsier_by_Deandra_Scicluna.jpg/250px-Kelsier_by_Deandra_Scicluna.jpg",
     ),
@@ -154,6 +154,8 @@ async def seed_spirits(session: AsyncSession):
 
 async def seed_venue_accounts(session: AsyncSession):
     for idx, (id, name, image) in enumerate(spirit_data, start=1):
+        if idx % 2 == 0:
+            continue  # Skip even indices for variety
         account = VenueAccount(
             id=f"{idx}",
             spiritId=id,

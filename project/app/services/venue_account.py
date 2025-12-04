@@ -4,6 +4,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy import func
 from datetime import datetime
+from fastapi import HTTPException, status
 from app.models import (
     VenueAccount,
     VenueAccountCreate,
@@ -94,6 +95,21 @@ class VenueAccountService:
     async def create_account(
         account_in: VenueAccountCreate, session: AsyncSession
     ) -> VenueAccount:
+        # Ensure the same spirit doesn't already have an overlapping account
+        start_dt = account_in.startTime
+        end_dt = account_in.endTime
+        overlap_q = select(VenueAccount).where(
+            (VenueAccount.spiritId == account_in.spiritId)
+            & (VenueAccount.startTime < end_dt)
+            & (VenueAccount.endTime > start_dt)
+        )
+        res = await session.exec(overlap_q)
+        if res.first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe una cuenta para este espíritu en el período especificado.",
+            )
+
         acct = VenueAccount(**account_in.dict())
         session.add(acct)
         await session.commit()

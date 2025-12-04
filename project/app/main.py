@@ -39,6 +39,7 @@ else:
         "http://localhost:8000",
         "http://localhost:8004",
         "http://127.0.0.1:3000",
+        "*",
     ]
 
 app.add_middleware(
