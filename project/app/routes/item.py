@@ -10,7 +10,8 @@ ItemRouter = APIRouter()
 
 @ItemRouter.get("/", response_model=list[ItemRead])
 async def list_items(session: AsyncSession = Depends(get_session)):
-    return await ItemService.list_items(session)
+    # use aggregated listing that computes quantities server-side to avoid lazy-loads
+    return await ItemService.list_items_with_quantity(session)
 
 
 @ItemRouter.post("/", response_model=ItemRead, status_code=status.HTTP_201_CREATED)

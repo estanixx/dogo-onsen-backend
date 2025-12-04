@@ -29,8 +29,8 @@ class TableAvailability(BaseModel):
 class DashboardRead(BaseModel):
     today_reservations_per_service: List[ServiceWithReservations]
     today_occupancy_rate: float
-    stock_alerts: int = 0
-    pending_orders: int = 0
+    stock_alerts: int
+    pending_orders: int
     today_table_availability: List[TableAvailability]
 
 

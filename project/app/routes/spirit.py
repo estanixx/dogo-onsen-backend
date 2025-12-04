@@ -14,7 +14,7 @@ async def list_spirits(session: AsyncSession = Depends(get_session)):
     return await SpiritService.list_spirits(session)
 
 
-@SpiritRouter.post("/", response_model=Spirit, status_code=status.HTTP_201_CREATED)
+@SpiritRouter.post("/", response_model=SpiritRead, status_code=status.HTTP_201_CREATED)
 async def create_spirit(
     spirit: SpiritCreate, session: AsyncSession = Depends(get_session)
 ):

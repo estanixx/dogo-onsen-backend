@@ -32,13 +32,13 @@ class SpiritService:
         return out
 
     @staticmethod
-    async def create_spirit(spirit_in: SpiritCreate, session: AsyncSession) -> Spirit:
+    async def create_spirit(spirit_in: SpiritCreate, session: AsyncSession) -> SpiritRead:
         s = Spirit(**spirit_in.dict())
         session.add(s)
         await session.commit()
-        await session.refresh(s.type)
         await session.refresh(s)
-        return s
+        # await session.refresh(s.type)
+        return await SpiritService.get_spirit(spirit_in.id, session)
 
     @staticmethod
     async def get_spirit(spirit_id: int, session: AsyncSession) -> Optional[SpiritRead]:
