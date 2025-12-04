@@ -39,7 +39,8 @@ services:
 
   tests:
     build: ./project
-    command: ["/bin/sh", "-c", "sh /usr/src/app/tests/entrypoint.sh"]
+    command: >
+      sh -c "ls /usr/src/app/**/*.py | entr -r sh /usr/src/app/tests/entrypoint.sh"
     volumes:
       - ./project:/usr/src/app
       - ./project/tests:/usr/src/app/tests

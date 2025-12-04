@@ -1,5 +1,5 @@
 import pytest
-from app.services.inventory_item import InventoryOrderService
+from app.services import ItemService
 
 
 @pytest.mark.asyncio
@@ -8,7 +8,7 @@ async def test_create_inventory_item_calls_session(async_session_mock):
         def dict(self):
             return {"id": "x", "name": "Test", "quantity": 1, "unit": "u"}
 
-    item = await InventoryOrderService.create_inventory_item(
+    item = await ItemService.create_item(
         ItemIn(), async_session_mock
     )
     # session.add should have been called

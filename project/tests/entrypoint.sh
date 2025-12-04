@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-
 # Working directory is /usr/src/app (mounted project)
 cd /usr/src/app || exit 1
 

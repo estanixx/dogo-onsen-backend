@@ -10,7 +10,7 @@ ENV PYTHONUNBUFFERED 1
 
 # install system dependencies
 RUN apt-get update \
-  && apt-get -y install netcat gcc postgresql libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libxext6\
+  && apt-get -y install netcat gcc postgresql libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libxext6 entr\
   && apt-get clean
 
 # install python dependencies
