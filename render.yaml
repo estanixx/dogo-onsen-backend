@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: dogo-onsen-backend
+    runtime: docker
+    rootDir: project
+    dockerfilePath: project/Dockerfile
+    dockerContext: project
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dogo-onsen-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_WEBHOOK_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_S3_BUCKET_NAME
+        sync: false
+      - key: AWS_S3_REGION
+        sync: false
+      - key: ENV
+        value: production
+    dockerCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 10000"
+    healthCheckPath: /docs
+    plan: free
+
+databases:
+  - name: dogo-onsen-db
+    databaseName: dogo_onsen
+    user: dogo_user
+    plan: free
+    region: oregon
+    postgresMajorVersion: "15"
