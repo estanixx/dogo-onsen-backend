@@ -27,7 +27,7 @@ services:
         sync: false
       - key: ENV
         value: production
-    dockerCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 10000"
+    dockerCommand: ./start.sh
     healthCheckPath: /docs
     plan: free
 

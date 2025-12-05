@@ -20,3 +20,7 @@ RUN pip install -r requirements.txt
 
 # add app
 COPY . .
+
+# make start script executable
+RUN chmod +x /usr/src/app/start.sh
+
