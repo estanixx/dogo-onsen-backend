@@ -2,7 +2,6 @@ services:
   - type: web
     name: dogo-onsen-backend
     runtime: docker
-    rootDir: project
     dockerfilePath: project/Dockerfile
     dockerContext: project
     envVars:
