@@ -90,6 +90,11 @@ What tests were added
 - `test_inventory_item.py` & `test_inventory_create.py` — inventory listing and creation helpers
 - `test_employee_service.py`, `test_employee_create_unique.py`, `test_employee_process_clerk_webhook.py` — employee creation and Clerk webhook handling
 - `test_device_cookie_middleware.py` — middleware that parses device cookie
+- `test_employee_pending.py` — RF-004: Pending employee access control and state transitions
+- `test_reservation_concurrency.py` — RNF-005: Concurrent reservation handling and double-booking prevention
+- `test_inventory_dozen.py` — RNF-006: Dozen↔units conversion, stock calculation, and low stock alerts
+- `test_rbac.py` — RNF-004: Role-based access control (admin, employee, receptionist roles)
+- `test_api_security.py` — API security and authentication validation
 
 Test tooling notes
 
@@ -110,7 +115,8 @@ Performance tests use [k6](https://k6.io/) to validate backend API endpoints dir
   k6 run tests/performance/load_test.js
   ```
 - **Scenarios**:
-  - Read load: Ramping VUs reading employee list.
-  - Write load: Constant VUs creating new employees.
+  - Read load: Validates RNF-001 (p95 < 300ms for read operations) — employees, services, inventory, reservations
+  - Write load: Validates RNF-002 (p95 < 400ms for write operations) — creating employees and reservations
+  - Concurrency test: Validates RNF-005 (resource consistency under concurrent access)
   
-- **CI**: Runs via `.github/workflows/performance-tests.yml`.
+- **CI**: Runs via `.github/workflows/performance-tests.yml` (requires PostgreSQL service).
