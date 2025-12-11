@@ -4,9 +4,18 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Reservation, ReservationCreate, ReservationUpdate, VenueAccount, Spirit
+from app.models import (
+    Reservation,
+    ReservationCreate,
+    ReservationUpdate,
+    VenueAccount,
+    Spirit,
+)
 from app.models import DateRequest
 from app.core.tools import logger
+
+# Use UTC for all datetime handling
+
 
 class ReservationService:
     @staticmethod
@@ -33,14 +42,15 @@ class ReservationService:
                 and filters["datetime"] != ""
             ):
                 # `datetime` filter may be a date (YYYY-MM-DD) or a full ISO datetime.
-                # - If it's a date, return reservations whose startTime falls within that UTC date.
-                # - If it's a full datetime, return reservations whose startTime equals that datetime.
+                # - If it's a date, return reservations whose startTime falls within that Bogotá date (00:00-23:59 Bogotá).
+                # - If it's a full datetime, return reservations whose startTime is within 1 hour of that datetime.
+                # Note: A Bogotá date 2024-12-10 spans UTC 2024-12-10 05:00 to 2024-12-11 04:59:59
                 val = filters["datetime"]
-                logger.debug(f"Filtering reservations by datetime: {val}\n\n\n\n\n\n\n\n\n")
+                logger.debug(f"Filtering reservations by datetime: {val}")
                 try:
                     if isinstance(val, str):
                         if len(val) <= 10 and "-" in val:
-                            # date string
+                            # date string (YYYY-MM-DD) interpreted as UTC date
                             d = date.fromisoformat(val)
                             start_dt = datetime.combine(d, time.min).replace(
                                 tzinfo=timezone.utc
@@ -50,7 +60,7 @@ class ReservationService:
                                 Reservation.startTime < end_dt
                             )
                         else:
-                            # full ISO datetime string
+                            # full ISO datetime string, interpret as UTC
                             dt = datetime.fromisoformat(val)
                             if dt.tzinfo is None:
                                 dt = dt.replace(tzinfo=timezone.utc)
@@ -62,7 +72,10 @@ class ReservationService:
                         dt = val
                         if dt.tzinfo is None:
                             dt = dt.replace(tzinfo=timezone.utc)
-                        q = q.where(Reservation.startTime == dt)
+                        end_dt = dt + timedelta(hours=1)
+                        q = q.where(Reservation.startTime >= dt).where(
+                            Reservation.startTime < end_dt
+                        )
                     elif isinstance(val, date):
                         d = val
                         start_dt = datetime.combine(d, time.min).replace(
@@ -78,7 +91,9 @@ class ReservationService:
                 except Exception:
                     raise ValueError("Invalid datetime filter format")
         q = q.options(
-            selectinload(Reservation.account).selectinload(VenueAccount.spirit).selectinload(Spirit.type),
+            selectinload(Reservation.account)
+            .selectinload(VenueAccount.spirit)
+            .selectinload(Spirit.type),
             selectinload(Reservation.service),
             selectinload(Reservation.seat),
         )
@@ -99,7 +114,7 @@ class ReservationService:
     async def get_banquet_reservations_for_date(
         payload: DateRequest, session: AsyncSession
     ) -> List[Reservation]:
-        # parse date (accept YYYY-MM-DD or full ISO datetime)
+        # Parse date (accept YYYY-MM-DD or full ISO datetime)
         try:
             if len(payload.date) <= 10 and "-" in payload.date:
                 d = date.fromisoformat(payload.date)
@@ -108,6 +123,7 @@ class ReservationService:
         except Exception:
             raise ValueError("Invalid date format")
 
+        # Interpret as UTC date boundaries for DB query
         start_dt = datetime.combine(d, time.min).replace(tzinfo=timezone.utc)
         end_dt = start_dt + timedelta(days=1)
 
@@ -130,11 +146,13 @@ class ReservationService:
         reservation_id: str, session: AsyncSession
     ) -> Optional[Reservation]:
         res = await session.exec(
-            select(Reservation).where(Reservation.id == reservation_id).options(
-            selectinload(Reservation.account),
-            selectinload(Reservation.service),
-            selectinload(Reservation.seat),
-        )
+            select(Reservation)
+            .where(Reservation.id == reservation_id)
+            .options(
+                selectinload(Reservation.account),
+                selectinload(Reservation.service),
+                selectinload(Reservation.seat),
+            )
         )
         return res.first()
 

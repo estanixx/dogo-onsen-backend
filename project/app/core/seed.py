@@ -6,10 +6,13 @@ from app.models import (
     VenueAccount,
     Spirit,
 )
+
 from app.services import BanquetService
 from app.models import Service
 from sqlmodel.ext.asyncio.session import AsyncSession
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from app.models import Item, ItemIntake, InventoryOrder, Order, Employee, Deposit
+from sqlmodel import select
 
 # name, kanji, dangerScore, image
 spirit_types_data = [
@@ -19,7 +22,7 @@ spirit_types_data = [
     ("Zashiki-warashi", "座敷童子", 2, "zashi.png", [1, 0, 0, 0, 2]),
     ("Jikininki", "食人鬼", 10, "jiki.png", [2, 2, 2, 2, 2]),
 ]
-spirit_img_prefix = "https://dogo-user-images.s3.us-east-2.amazonaws.com/spirit_types/"
+spirit_img_prefix = "https://dogo-onsen.s3.us-east-1.amazonaws.com/spirit_types/"
 
 
 async def seed_spirit_types(session: AsyncSession):
@@ -121,7 +124,7 @@ service_data = [
     (
         "Protective Charm",
         75,
-        "https://i.etsystatic.com/9773885/r/il/319eb3/1178376308/il_570xN.1178376308_3cjs.jpg",  
+        "https://i.etsystatic.com/9773885/r/il/319eb3/1178376308/il_570xN.1178376308_3cjs.jpg",
         "Protective charms to ward off evil spirits.",
     ),
     (
@@ -167,9 +170,24 @@ async def seed_venue_accounts(session: AsyncSession):
         session.add(account)
     await session.commit()
 
+
+async def seed_wallets(session: AsyncSession):
+    res = await session.exec(select(VenueAccount))
+    accounts = res.all()
+    if not accounts:
+        return
+    now = datetime.now(timezone.utc)
+    for idx, account in enumerate(accounts):
+        amount = 100 + (idx * 137 % 1401)  # deterministic 100-1500
+        session.add(Deposit(accountId=account.id, amount=amount, date=now))
+    await session.commit()
+
+
 async def seed_services(session: AsyncSession):
     for name, eiltRate, image, description in service_data:
+        id = "banquete" if name == "Banquete" else None
         service = Service(
+            id=id,
             name=name,
             eiltRate=eiltRate,
             image=image,
@@ -177,6 +195,7 @@ async def seed_services(session: AsyncSession):
         )
         session.add(service)
     await session.commit()
+
 
 async def run_seeds(session: AsyncSession):
     try:
@@ -210,8 +229,150 @@ async def run_seeds(session: AsyncSession):
         print(f"Error seeding venue accounts: {e}")
         return "error"
     try:
+        await seed_wallets(session)
+    except Exception as e:
+        print(f"Error seeding wallets: {e}")
+        return "error"
+    try:
         await seed_banquet(10, session)
     except Exception as e:
         print(f"Error seeding banquets: {e}")
         return "error"
+    try:
+        await seed_employees(session)
+    except Exception as e:
+        print(f"Error seeding employees: {e}")
+        return "error"
+    try:
+        await seed_items(session)
+    except Exception as e:
+        print(f"Error seeding items: {e}")
+        return "error"
+    try:
+        await seed_orders(session)
+    except Exception as e:
+        print(f"Error seeding orders: {e}")
+        return "error"
+    try:
+        await seed_inventory_orders(session)
+    except Exception as e:
+        print(f"Error seeding inventory orders: {e}")
+        return "error"
+    try:
+        await seed_item_intakes(session)
+    except Exception as e:
+        print(f"Error seeding item intakes: {e}")
+        return "error"
     return "ok"
+
+
+async def seed_items(session: AsyncSession):
+    items = [
+        ("Sake Bottle", "https://example.com/sake.png", "unit"),
+        ("Candles", "https://example.com/candle.png", "pcs"),
+        ("Incense", "https://example.com/incense.png", "bunch"),
+        ("Rice", "https://example.com/rice.png", "kg"),
+        ("Soy Sauce", "https://example.com/soy.png", "bottle"),
+        ("Tea", "https://example.com/tea.png", "box"),
+        ("Table Cloth", "https://example.com/cloth.png", "unit"),
+        ("Plates", "https://example.com/plates.png", "pcs"),
+        ("Cups", "https://example.com/cups.png", "pcs"),
+        ("Napkins", "https://example.com/napkins.png", "pack"),
+        ("Chopsticks", "https://example.com/chopsticks.png", "pair"),
+        ("Soy Packs", "https://example.com/soypacks.png", "pack"),
+    ]
+    for name, image, unit in items:
+        session.add(Item(name=name, image=image, unit=unit))
+    await session.commit()
+
+
+async def seed_employees(session: AsyncSession):
+    # create 10 sample employees with clerkId
+    for i in range(1, 11):
+        emp = Employee(clerkId=f"emp{i}", firstName=f"First{i}", lastName=f"Last{i}")
+        session.add(emp)
+    await session.commit()
+
+
+async def seed_orders(session: AsyncSession):
+    now = datetime.now()
+    # Prefer real employees from the employee table; fall back to defaults
+    try:
+        res = await session.exec(select(Employee))
+        employees = res.all()
+    except Exception:
+        employees = []
+
+    if employees:
+        # create one order per employee (limit to first 10)
+        for emp in employees[:10]:
+            o = Order(
+                idEmployee=emp.clerkId,
+                orderDate=now,
+                deliveryDate=now + timedelta(days=3),
+            )
+            session.add(o)
+        # ensure at least 10 orders exist
+        existing = len(employees[:10])
+        for i in range(existing, 10):
+            session.add(
+                Order(
+                    idEmployee=f"admin{i+1}",
+                    orderDate=now,
+                    deliveryDate=now + timedelta(days=5),
+                )
+            )
+    else:
+        # fallback orders for admin/clerk
+        o1 = Order(
+            idEmployee="admin", orderDate=now, deliveryDate=now + timedelta(days=3)
+        )
+        o2 = Order(
+            idEmployee="clerk", orderDate=now, deliveryDate=now + timedelta(days=7)
+        )
+        session.add(o1)
+        session.add(o2)
+
+    await session.commit()
+
+
+async def seed_inventory_orders(session: AsyncSession):
+    # select items and orders
+    res_items = await session.exec(select(Item))
+    items = res_items.all()
+    res_orders = await session.exec(select(Order))
+    orders = res_orders.all()
+    if not items or not orders:
+        return
+    # create at least 12 inventory orders, round-robin items and orders
+    # mix higher quantities (over-provision) and lower ones (under-provision)
+    for idx in range(12):
+        ord_idx = idx % len(orders)
+        item_idx = idx % len(items)
+        qty = 3 + (idx * 2)  # grows to generate some large receipts
+        io = InventoryOrder(
+            idOrder=orders[ord_idx].id,
+            idItem=items[item_idx].id,
+            quantity=qty,
+            redeemed=(idx % 3 != 0),  # every 3rd stays pending to simulate shortages
+        )
+        session.add(io)
+    await session.commit()
+
+
+async def seed_item_intakes(session: AsyncSession):
+    res_items = await session.exec(select(Item))
+    items = res_items.all()
+    res_services = await session.exec(select(Service))
+    services = res_services.all()
+    if not items or not services:
+        return
+
+    # create at least 12 intakes, always with serviceId, distributed across services
+    for idx in range(12):
+        item = items[idx % len(items)]
+        svc = services[idx % len(services)]
+        qty = 1 + (idx % 4)  # vary consumption; some higher to stress inventory
+        intake = ItemIntake(quantity=qty, itemId=item.id, serviceId=svc.id)
+        session.add(intake)
+    await session.commit()

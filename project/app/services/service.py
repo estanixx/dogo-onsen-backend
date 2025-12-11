@@ -68,10 +68,7 @@ class ServiceService:
     async def get_available_time_slots(
         service_id: str, date_payload: str, session: AsyncSession
     ) -> List[str]:
-        """Return TIME_SLOTS that are not already reserved for the service on the given date.
-
-        `date_payload` accepts either YYYY-MM-DD or a full ISO datetime string.
-        """
+        """Return TIME_SLOTS that are not in the past and not reserved for the service on the date."""
         try:
             if len(date_payload) <= 10 and "-" in date_payload:
                 d = date.fromisoformat(date_payload)
@@ -80,11 +77,16 @@ class ServiceService:
         except Exception:
             raise ValueError("Invalid date format")
 
+        bogota_tz = timezone(timedelta(hours=-5))
+        today_bogota = datetime.now(timezone.utc).astimezone(bogota_tz).date()
+        if d < today_bogota:
+            return []
+
+        is_today = d == today_bogota
+        now_utc = datetime.now(timezone.utc) if is_today else None
+
         start_dt = datetime.combine(d, time.min).replace(tzinfo=timezone.utc)
         end_dt = start_dt + timedelta(days=1)
-
-        # select reservations for this service on the date
-        from app.models import Reservation
 
         q = (
             select(Reservation)
@@ -95,16 +97,36 @@ class ServiceService:
         res = await session.exec(q)
         reservations = res.all()
 
-        # Format reserved start times to match TIME_SLOTS (e.g. '09:00 AM')
-        reserved_slots = set()
-        for r in reservations:
-            if r.startTime is None:
-                continue
-            # ensure we format in UTC the same way slots are defined
-            ts = r.startTime
-            reserved_slots.add(ts.strftime("%I:%M %p"))
+        available: List[str] = []
 
-        available = [t for t in TIME_SLOTS if t not in reserved_slots]
+        for slot in TIME_SLOTS:
+            try:
+                slot_time = datetime.strptime(slot, "%I:%M %p").time()
+            except Exception:
+                continue
+
+            slot_start_local = datetime.combine(d, slot_time).replace(tzinfo=bogota_tz)
+            slot_start = slot_start_local.astimezone(timezone.utc)
+            slot_end = slot_start + timedelta(hours=1)
+
+            if is_today and now_utc is not None and slot_end <= now_utc:
+                continue
+
+            slot_taken = False
+            for r in reservations:
+                if r.startTime is None:
+                    continue
+                res_start = r.startTime
+                res_end = getattr(r, "endTime", None) or (
+                    res_start + timedelta(hours=1)
+                )
+                if res_start < slot_end and res_end > slot_start:
+                    slot_taken = True
+                    break
+
+            if not slot_taken:
+                available.append(slot)
+
         return available
 
     @staticmethod
