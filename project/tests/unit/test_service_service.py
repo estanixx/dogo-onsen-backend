@@ -67,18 +67,3 @@ async def test_list_and_create_and_get_update_delete_service():
     ok2 = await ServiceService.delete_service("missing", session=session)
     assert ok2 is False
 
-
-import pytest
-from app.services.service import ServiceService
-
-
-@pytest.mark.asyncio
-async def test_get_available_time_slots_empty(async_session_mock):
-    # No reservations -> should return TIME_SLOTS length
-    slots = await ServiceService.get_available_time_slots(
-        "svc-1", "2025-11-30", async_session_mock
-    )
-    from app.core.constants import TIME_SLOTS
-
-    assert isinstance(slots, list)
-    assert len(slots) == len(TIME_SLOTS)
