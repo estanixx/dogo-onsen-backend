@@ -236,6 +236,12 @@ async def admin_update_employee_status(
             session
         )
         
+        # Sync to Clerk
+        await ClerkAPIService.update_user_metadata(
+            clerk_id, 
+            {"accessStatus": status_update.estado}
+        )
+        
         return updated_employee
     
     except HTTPException:
@@ -271,11 +277,16 @@ async def admin_sync_from_clerk(
         synced_count = 0
         updated_count = 0
         
+        # Collect all Clerk IDs from the users list
+        clerk_ids = set()
+        
         for user in users:
             try:
                 clerk_id = user.get("id")
                 if not clerk_id:
                     continue
+                
+                clerk_ids.add(clerk_id)
                 
                 emp_payload = EmployeeService._map_clerk_user_to_employee_payload(user)
                 
@@ -302,14 +313,26 @@ async def admin_sync_from_clerk(
                 print(f"Error syncing user {user.get('id')}: {str(e)}")
                 continue
         
+        # Delete employees that no longer exist in Clerk
+        deleted_count = 0
+        all_employees_result = await session.exec(select(Employee))
+        all_employees = all_employees_result.all()
+        
+        for emp in all_employees:
+            if emp.clerkId not in clerk_ids:
+                await session.delete(emp)
+                deleted_count += 1
+                print(f"Deleted employee {emp.clerkId} (no longer exists in Clerk)")
+        
         # Commit all changes
         await session.commit()
         
         return {
             "ok": True,
-            "message": f"Synced {synced_count} new users and updated {updated_count} existing users",
+            "message": f"Synced {synced_count} new users, updated {updated_count} existing users, and deleted {deleted_count} orphaned users",
             "synced_count": synced_count,
-            "updated_count": updated_count
+            "updated_count": updated_count,
+            "deleted_count": deleted_count
         }
     
     except HTTPException:
@@ -333,35 +356,16 @@ async def admin_make_employee_admin(
     """
     try:
         # Make the API call to Clerk to set admin role
-        import httpx
+        success = await ClerkAPIService.update_user_metadata(
+            clerk_id, 
+            {"role": "admin"}
+        )
         
-        secret_key = os.getenv("CLERK_SECRET_KEY")
-        if not secret_key:
+        if not success:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="CLERK_SECRET_KEY not configured"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to update user in Clerk"
             )
-        
-        url = f"https://api.clerk.com/v1/users/{clerk_id}"
-        headers = {
-            "Authorization": f"Bearer {secret_key}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "public_metadata": {
-                "role": "admin"
-            }
-        }
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.patch(url, json=payload, headers=headers, timeout=10.0)
-            
-            if response.status_code not in [200, 201]:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to update user in Clerk: {response.text}"
-                )
         
         # Update the local database as well
         employee_update = EmployeeUpdate()

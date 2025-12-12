@@ -112,3 +112,52 @@ class ClerkAPIService:
             "lastName": user_data.get("last_name") or "",
             "email": email or ""
         }
+    @classmethod
+    async def update_user_metadata(cls, clerk_id: str, public_metadata_update: Dict[str, Any]) -> bool:
+        """
+        Update user's public metadata in Clerk.
+        Safely merges with existing metadata to prevent data loss.
+        
+        Args:
+            clerk_id: The Clerk user ID
+            public_metadata_update: Dictionary of metadata keys to update
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # 1. Fetch current user data to get existing metadata
+            current_user = await cls.get_user(clerk_id)
+            if not current_user:
+                logger.error(f"Cannot update metadata: User {clerk_id} not found")
+                return False
+            
+            # 2. Merge existing metadata with updates
+            current_metadata = current_user.get("public_metadata") or {}
+            updated_metadata = {**current_metadata, **public_metadata_update}
+            
+            # 3. Send update to Clerk
+            secret_key = cls._get_clerk_secret_key()
+            url = f"{cls.CLERK_API_URL}/users/{clerk_id}"
+            
+            headers = {
+                "Authorization": f"Bearer {secret_key}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "public_metadata": updated_metadata
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.patch(url, json=payload, headers=headers, timeout=10.0)
+                
+                if response.status_code != 200:
+                    logger.error(f"Clerk API error updating metadata {response.status_code}: {response.text}")
+                    return False
+                
+                return True
+                
+        except Exception as e:
+            logger.error(f"Error updating user metadata in Clerk: {str(e)}")
+            return False
